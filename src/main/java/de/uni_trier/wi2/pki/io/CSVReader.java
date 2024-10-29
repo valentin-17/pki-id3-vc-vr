@@ -25,7 +25,7 @@ public class CSVReader {
      */
     public static List<String[]> readCsvToArray(String relativePath, String delimiter, boolean ignoreHeader) throws IOException {
 
-
+        int i = 0;
         return parsedLines;
     }
 
