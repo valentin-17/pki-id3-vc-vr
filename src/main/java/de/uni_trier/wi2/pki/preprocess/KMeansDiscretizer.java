@@ -21,7 +21,8 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      */
     public List<Object[]> discretize(int numberOfBins, List<Object[]> examples, int attributeId) {
 
-
+        //tmp
+        List<Object[]> result = null;
         return result;
     }
 
@@ -35,6 +36,8 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      */
     private double[] initializeCentroids(double[] values, int numberOfBins) {
 
+        //tmp
+        double[] centroids = null;
         return centroids;
     }
 
@@ -47,6 +50,8 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      */
     private int findNearestCentroid(double value, double[] centroids) {
 
+        //tmp
+        int nearestIndex = 0;
         return nearestIndex;
     }
 
@@ -60,6 +65,8 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      */
     private double[] calculateNewCentroids(double[] values, int[] clusters, int numberOfBins) {
 
+        //tmp
+        double[] centroids = null;
         return centroids;
     }
 }

@@ -60,7 +60,8 @@ public class DecisionTreeNode {
      * @return the leaf node.
      */
     protected DecisionTreeNode getClassificationNode(Object[] example) {
-
+        //tmp
+        return null;
     }
 
     /**
