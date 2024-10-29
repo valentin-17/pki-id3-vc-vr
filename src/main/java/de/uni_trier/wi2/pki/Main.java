@@ -31,10 +31,6 @@ public class Main {
             e.printStackTrace();
         }
 
-        for(String[] line : parsedLines) {
-            System.out.println(Arrays.toString(line));
-        }
-
         /*
         // define data types of the dataset
         ArrayList<Boolean> attrIsContinuous = new ArrayList<>();
