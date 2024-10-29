@@ -5,6 +5,7 @@ import de.uni_trier.wi2.pki.io.XMLWriter;
 import de.uni_trier.wi2.pki.postprocess.CrossValidator;
 import de.uni_trier.wi2.pki.postprocess.ReducedErrorPruner;
 import de.uni_trier.wi2.pki.preprocess.BinningDiscretizer;
+import de.uni_trier.wi2.pki.preprocess.EqualFrequencyDiscretization.*;
 import de.uni_trier.wi2.pki.preprocess.EqualWidthDiscretization;
 import de.uni_trier.wi2.pki.tree.DecisionTree;
 import de.uni_trier.wi2.pki.util.EntropyUtils;
@@ -22,6 +23,11 @@ public class Main {
         // some constants
         final String FILE_NAME = "housing_data.csv";
         final int LABEL_ATTR_INDEX = 10;
+
+        //discretization params
+        enum Discretizer {EF, EQ, KM};
+        final int bins = 0;
+        final int attributeId = 0;
 
         // parse CSV data
         List<String[]> parsedLines = null;
