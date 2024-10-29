@@ -57,7 +57,7 @@ public class XMLWriter {
      * @param xmlParentElem the parent element in the XML to append to.
      */
     private static void addNode(DecisionTreeNode decTreeNode, Element xmlParentElem) {
-        String test = "Hallo";
+        int zahl = 0;
     }
 
 }
