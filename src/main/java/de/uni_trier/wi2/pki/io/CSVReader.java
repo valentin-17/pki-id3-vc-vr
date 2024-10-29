@@ -1,11 +1,8 @@
 package de.uni_trier.wi2.pki.io;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.*;
+import java.nio.file.FileSystemException;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,8 +22,34 @@ public class CSVReader {
      */
     public static List<String[]> readCsvToArray(String relativePath, String delimiter, boolean ignoreHeader) throws IOException {
 
-        int i = 0;
+        File inputFile = new File(relativePath);
+        String line = null;
+        List<String[]> parsedLines = new ArrayList<>() {};
+
+        //debug
+        System.out.println(relativePath);
+
+        // checks if the file that is being used exists
+        validateFile(inputFile);
+
+        // read the file line by line and split each line at the character denoted by delimiter
+        try (BufferedReader data = new BufferedReader(new FileReader(inputFile))) {
+
+            // omit the first line if ignoreHeader is true
+            if (ignoreHeader) {data.readLine();}
+
+            while((line=data.readLine())!=null) {
+                parsedLines.add(line.split(delimiter));
+            }
+        } catch (FileNotFoundException fne) {
+            fne.getStackTrace();
+        }
+
         return parsedLines;
+    }
+
+    private static void validateFile(File toTest) throws FileNotFoundException {
+        if (!toTest.exists()) throw new FileNotFoundException("This File does not Exist");
     }
 
 }

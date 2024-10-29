@@ -12,6 +12,7 @@ import de.uni_trier.wi2.pki.util.ID3Utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -19,17 +20,22 @@ public class Main {
 
     public static void main(String[] args) {
         // some constants
-        final String FILE_NAME = "mycsv.csv";
+        final String FILE_NAME = "housing_data.csv";
         final int LABEL_ATTR_INDEX = 10;
 
         // parse CSV data
         List<String[]> parsedLines = null;
         try {
-            parsedLines = CSVReader.readCsvToArray("target/classes/" + FILE_NAME, ";", true);
+            parsedLines = CSVReader.readCsvToArray("target/classes/" + FILE_NAME, ",", true);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+        for(String[] line : parsedLines) {
+            System.out.println(Arrays.toString(line));
+        }
+
+        /*
         // define data types of the dataset
         ArrayList<Boolean> attrIsContinuous = new ArrayList<>();
         attrIsContinuous.add(0, true);
@@ -43,7 +49,7 @@ public class Main {
         attrIsContinuous.add(8, false);
         attrIsContinuous.add(9, true);
         attrIsContinuous.add(10, false);
-
+        */
         // Train model, evaluate model, write XML, ...
     }
 
