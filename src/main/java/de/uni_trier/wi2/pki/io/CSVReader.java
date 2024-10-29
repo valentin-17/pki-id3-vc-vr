@@ -26,12 +26,6 @@ public class CSVReader {
         String line = null;
         List<String[]> parsedLines = new ArrayList<>() {};
 
-        //debug
-        System.out.println(relativePath);
-
-        // checks if the file that is being used exists
-        validateFile(inputFile);
-
         // read the file line by line and split each line at the character denoted by delimiter
         try (BufferedReader data = new BufferedReader(new FileReader(inputFile))) {
 
@@ -47,9 +41,4 @@ public class CSVReader {
 
         return parsedLines;
     }
-
-    private static void validateFile(File toTest) throws FileNotFoundException {
-        if (!toTest.exists()) throw new FileNotFoundException("This File does not Exist");
-    }
-
 }
