@@ -1,10 +1,6 @@
 package de.uni_trier.wi2.pki.preprocess;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.Comparator;
 
 /**
  * Class that holds logic for discretizing values.
@@ -19,11 +15,27 @@ public class EqualFrequencyDiscretization extends BinningDiscretizer {
      * @param attributeId  The ID of the attribute to discretize.
      * @return the list of discretized examples.
      */
+    // TODO: trim data to fit the number of bins
     public List<Object[]> discretize(int numberOfBins, List<Object[]> examples, int attributeId) {
 
-        //tmp
-        List<Object[]> result = null;
-        return result;
-    }
+        int numberOfExamples = examples.size();
+        int numberOfExamplesPerBin = numberOfExamples / numberOfBins;
+        // TODO: remove magic number
+        int binId = 1;
 
+        // loop through the sorted examples and assign them to bins
+        for (int i = 0; i < numberOfBins; i++) {
+
+            int finalBinId = binId;
+
+            // assign numberOfExamplesPerBin examples to the current bin
+            examples.stream()
+                    .skip((long) i * numberOfExamplesPerBin)
+                    .limit(numberOfExamplesPerBin)
+                    .forEach(example -> example[attributeId] = finalBinId);
+            binId++;
+        }
+
+        return examples;
+    }
 }
