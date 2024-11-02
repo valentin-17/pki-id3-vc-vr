@@ -1,5 +1,7 @@
 package de.uni_trier.wi2.pki.preprocess;
 
+import org.apache.commons.math3.ml.clustering.CentroidCluster;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,6 +22,22 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      * @return the list of discretized examples.
      */
     public List<Object[]> discretize(int numberOfBins, List<Object[]> examples, int attributeId) {
+
+        int quality_new = Integer.MAX_VALUE;
+        int quality_old = 0;
+        double epsilon = 0.001;
+
+
+        while (quality_old - quality_new < epsilon) {
+
+            // initialize centroids
+            double[] values = examples.stream().mapToDouble(e -> (double) e[attributeId]).toArray();
+            double[] centroids = initializeCentroids(values, numberOfBins);
+
+            for (Object[] example : examples) {
+                int nearestCentroid = findNearestCentroid((double) example[attributeId], centroids);
+                centroids[nearestCentroid] = 0.0;            }
+        }
 
         //tmp
         List<Object[]> result = null;
