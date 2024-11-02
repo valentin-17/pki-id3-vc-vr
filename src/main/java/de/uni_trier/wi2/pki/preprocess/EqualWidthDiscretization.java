@@ -23,28 +23,30 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
 
     public List<Object[]> discretize(int numberOfBins, List<Object[]> examples, int attributeId) {
 
-        if (examples == null || examples.isEmpty()) {
-            throw new IllegalArgumentException("The list of examples is empty.");
-        }
-
         List<Object[]> outputList = new ArrayList<>();
+        int binWidth = getbinWidth(examples, numberOfBins, attributeId);
+        double [] binCenters = getbinCenters(examples, numberOfBins, attributeId, binWidth);
+
+        //System.out.println("in discretize + binWidth " + binWidth);
 
 
-        int binIndex = (int) binWidth(minValue(examples, attributeId), maxValue(examples, attributeId), numberOfBins);
-
-        //noch nicht fertig da fehlt noch woher weis du wann binIndex erreicht ist und du musst das ganz Object Array mit in die neue liste packen
+        // Zuweisung jedes Wertes zum nächstgelegenen Bin-Center
         for (Object[] example : examples) {
-            example[attributeId] = binIndex;
-            outputList.add(example);
+            double temp_number = ((Number) example[attributeId]).doubleValue();
+            double closestCenter = findClosestBinCenter(temp_number, binCenters);
+            Object[] modifyedExample = example.clone();
+            modifyedExample[attributeId] = closestCenter;
+            outputList.add(modifyedExample);
         }
 
         return outputList;
     }
 
-    private double minValue(List<Object[]> examples, int attributeId) {
+    //Minimum suchen
+    public static double getMin(List<Object[]> examples, int attributeId) {
         double min = Double.MAX_VALUE;
         for (Object[] example : examples) {
-            double value = (double) example[attributeId];
+            double value = ((Number) example[attributeId]).doubleValue();
             if (value < min) {
                 min = value;
             }
@@ -52,10 +54,11 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
         return min;
     }
 
-    private double maxValue(List<Object[]> examples, int attributeId) {
+    //Maximum suchen
+    public static double getMax(List<Object[]> examples, int attributeId) {
         double max = Double.MIN_VALUE;
         for (Object[] example : examples) {
-            double value = (double) example[attributeId];
+            double value = ((Number) example[attributeId]).doubleValue();
             if (value > max) {
                 max = value;
             }
@@ -63,10 +66,40 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
         return max;
     }
 
-    private double binWidth(double min, double max, int numberOfBins) {
-        return (max - min) / numberOfBins;
+    //calculate the bin width
+    public static int getbinWidth(List<Object[]> examples, int numberOfBins, int attributeId) {
+
+        double min = getMin(examples, attributeId);
+        double max = getMax(examples, attributeId);
+        //System.out.println("in binWidth");
+        return (int) ((max - min) / numberOfBins);
     }
 
+    //binCenter berechnen
+    public static double[] getbinCenters(List<Object[]> examples, int numberOfBins, int attributeId, int binWidth) {
 
+        double min = getMin(examples, attributeId);
+        double[] binCenters = new double[numberOfBins];
+        for (int i = 0; i < numberOfBins; i++) {
+            binCenters[i] = min + binWidth * (i + 0.5);
+        }
 
+        return binCenters;
+    }
+
+    //am nächten liegende binCenter finden
+    public static double findClosestBinCenter(double temp_number, double[] binCenters) {
+        double closestCenter = binCenters[0];
+        double minDistance = Math.abs(temp_number - binCenters[0]);
+
+        for (double center : binCenters) {
+            double distance = Math.abs(temp_number - center);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestCenter = center;
+            }
+        }
+
+        return closestCenter;
+    }
 }
