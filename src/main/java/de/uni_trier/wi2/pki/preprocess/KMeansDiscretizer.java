@@ -1,12 +1,7 @@
 package de.uni_trier.wi2.pki.preprocess;
 
-import org.apache.commons.math3.ml.clustering.CentroidCluster;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Comparator;
+import java.util.*;
+import java.util.stream.DoubleStream;
 
 /**
  * Class that holds logic for discretizing values using K-means clustering.
@@ -23,27 +18,36 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      */
     public List<Object[]> discretize(int numberOfBins, List<Object[]> examples, int attributeId) {
 
-        int quality_new = Integer.MAX_VALUE;
-        int quality_old = 0;
-        double epsilon = 0.001;
+        double quality_new = Double.MAX_VALUE;
+        double quality_old = 0;
+        double epsilon = 0.01;
+        int[] clusterAssignments = new int[examples.size()];
 
+        // initialize centroids
+        double[] attributeToCluster = examples.stream().mapToDouble(e -> (double) e[attributeId]).toArray();
+        double[] centroids = initializeCentroids(attributeToCluster, numberOfBins);
 
+        // clustering loop
         while (quality_old - quality_new < epsilon) {
 
-            // initialize centroids
-            double[] values = examples.stream().mapToDouble(e -> (double) e[attributeId]).toArray();
-            double[] centroids = initializeCentroids(values, numberOfBins);
-
-            for (Object[] example : examples) {
+            for (int i = 0; i < examples.size(); i++) {
+                Object[] example = examples.get(i);
                 int nearestCentroid = findNearestCentroid((double) example[attributeId], centroids);
-                centroids[nearestCentroid] = 0.0;            }
+                clusterAssignments[i] = nearestCentroid;
+            }
+
+            // Recalculate the centroids based on the current cluster assignments
+            centroids = calculateNewCentroids(attributeToCluster, clusterAssignments, numberOfBins);
+
+            // Update the quality measure
+            quality_old = quality_new;
+            quality_new = calculateQuality(attributeToCluster, centroids, clusterAssignments);
         }
 
         //tmp
         List<Object[]> result = null;
         return result;
     }
-
 
     /**
      * Initializes the centroids for the K-means algorithm.
@@ -54,8 +58,18 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      */
     private double[] initializeCentroids(double[] values, int numberOfBins) {
 
-        //tmp
-        double[] centroids = null;
+        ArrayList<Double> tmpValues = new ArrayList<>(DoubleStream.of(values).boxed().toList());
+        double[] centroids = new double[numberOfBins];
+
+        // shuffle the values to ensure random selection of initial centroids
+        Collections.shuffle(tmpValues);
+
+        // pick the first n (numberOfBins) values as initial centroids
+        // because of random shuffling we can simply use the first n values
+        for (int i = 0; i < numberOfBins; i++) {
+            centroids[i] = tmpValues.get(i);
+        }
+        
         return centroids;
     }
 
@@ -68,16 +82,27 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      */
     private int findNearestCentroid(double value, double[] centroids) {
 
-        //tmp
-        int nearestIndex = 0;
-        return nearestIndex;
+        int index = 0;
+        // TODO: review if Double.MAX_VALUE is a good choice for the initial value
+        double minDistance = Double.MAX_VALUE;
+
+        // Loop through all centroids and find the one with the smallest absolute distance to the value
+        for (int i = 0; i < centroids.length; i++) {
+            double distance = Math.abs(value - centroids[i]);
+            if (distance < minDistance) {
+                minDistance = distance;
+                index = i;
+            }
+        }
+
+        return index;
     }
 
     /**
      * Calculates new centroids based on current cluster assignments.
      *
-     * @param values The original values.
-     * @param clusters The current cluster assignments.
+     * @param values       The original values.
+     * @param clusters     The current cluster assignments.
      * @param numberOfBins The number of clusters.
      * @return The recalculated centroids.
      */
@@ -86,5 +111,17 @@ public class KMeansDiscretizer extends BinningDiscretizer {
         //tmp
         double[] centroids = null;
         return centroids;
+    }
+
+    /**
+     * Calculates the quality of the current clustering.
+     *
+     * @param attributeToCluster The values to cluster.
+     * @param centroids          The current centroids.
+     * @param clusterAssignments The current cluster assignments.
+     * @return The quality of the clustering.
+     */
+    private double calculateQuality(double[] attributeToCluster, double[] centroids, int[] clusterAssignments) {
+
     }
 }
