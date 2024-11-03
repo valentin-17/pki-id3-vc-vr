@@ -1,0 +1,4 @@
+1. Sollen NA Werte in den Daten entfernt werden?
+2. Sollen symbolische Daten beim Lesen der CSV in numerische Daten transformiert werden?
+3. Welche Bezeichnung sollen die Bins beim Clustern bekommen?
+4. Nach dem Clustering geben wir die Liste der Input Werte zurück. An der Stelle des zu clusternden Attributs steht dann der Index des Clusters/Bins?
