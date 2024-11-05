@@ -21,6 +21,8 @@ public class CSVReader {
      * @return A list that contains string arrays. Each string array stands for one parsed line of the CSV file
      * @throws IOException if something goes wrong. Exception should be handled at the calling function.
      */
+
+    // TODO: seperate na filter from reader
     public static List<String[]> readCsvToArray(String relativePath, String delimiter, boolean ignoreHeader) throws IOException {
 
         File inputFile = new File(relativePath);

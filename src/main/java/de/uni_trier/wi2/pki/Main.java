@@ -1,7 +1,6 @@
 package de.uni_trier.wi2.pki;
 
 import de.uni_trier.wi2.pki.io.CSVReader;
-import de.uni_trier.wi2.pki.preprocess.BinningDiscretizer;
 import de.uni_trier.wi2.pki.preprocess.EqualFrequencyDiscretization;
 import de.uni_trier.wi2.pki.preprocess.EqualWidthDiscretization;
 import de.uni_trier.wi2.pki.preprocess.KMeansDiscretizer;
@@ -10,7 +9,6 @@ import de.uni_trier.wi2.pki.util.Helpers;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 
 import static de.uni_trier.wi2.pki.util.Helpers.convertToObjectList;
 import static de.uni_trier.wi2.pki.util.Helpers.printData;
@@ -43,12 +41,12 @@ public class Main {
             throw new RuntimeException("No data parsed");
         }
 
-        // printData(convertToObjectList(parsedLines));
-        // System.out.println(parsedLines.size());
+        printData(convertToObjectList(parsedLines));
+        System.out.println(parsedLines.size());
 
         List<Object[]> convertedInput = convertToObjectList(parsedLines);
         System.out.println("Discretized data: ");
-        printData(kmd.discretize(BINS, convertedInput, ATTRIBUTE_ID));
+        printData(efd.discretize(BINS, convertedInput, ATTRIBUTE_ID));
 
         /*
         // define data types of the dataset

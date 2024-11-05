@@ -2,6 +2,7 @@ package de.uni_trier.wi2.pki.util;
 
 import javax.print.attribute.standard.MediaSize;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
