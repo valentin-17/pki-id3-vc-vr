@@ -20,21 +20,31 @@ public class KMeansDiscretizer extends BinningDiscretizer {
     public List<Object[]> discretize(int numberOfBins, List<Object[]> examples, int attributeId) {
         double quality_new = Double.MAX_VALUE;
         double quality_old = 0;
-        double epsilon = 0.01;
+        double epsilon = 0.1;
         int[] clusters = new int[examples.size()];
+        int iterCounter = 0;
 
         /* initialize centroids */
-        double[] values = examples.stream().mapToDouble(e -> Double.parseDouble((String) e[attributeId])).toArray();
-        double[] centroids = initializeCentroids(values, numberOfBins);
+        double[] values = null;
+        double[] centroids = null;
 
-        // DEBUG
-        System.out.println("Init completed with following centroids: " + Arrays.toString(centroids));
+        /* check if attribute to discretize is numeric */
+        try {
+            values = examples.stream().mapToDouble(e -> Double.parseDouble((String) e[attributeId])).toArray();
+            centroids = initializeCentroids(values, numberOfBins);
+        } catch (NumberFormatException nfe) {
+            System.out.println("Could not initialize Centroids. Attribute must be numeric! \n" + nfe.getMessage());
+        }
+
+        /* check if values and centroids are initialized */
+        assert values != null;
+        assert centroids != null;
+
+        System.out.println("K-Means initialization completed with the following centroids: " + Arrays.toString(centroids));
 
         /* clustering loop */
-        while (quality_old - quality_new < epsilon) {
-
-            int debugCounter = 0;
-            System.out.printf("Iteration %d\n", debugCounter++);
+        while (Math.abs(quality_old - quality_new) >= epsilon) {
+            iterCounter++;
 
             /* Assign each example to the nearest centroid */
             for (int i = 0; i < examples.size(); i++) {
@@ -52,6 +62,7 @@ public class KMeansDiscretizer extends BinningDiscretizer {
             quality_new = calculateQuality(values, centroids, clusters);
         }
 
+        System.out.println("KMeans clustering completed after " + iterCounter + " iterations.");
         return examples.stream().peek(e -> e[attributeId] = clusters[examples.indexOf(e)]).toList();
     }
 
