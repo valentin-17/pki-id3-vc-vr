@@ -4,6 +4,7 @@ import java.io.*;
 import java.nio.file.FileSystemException;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -20,6 +21,8 @@ public class CSVReader {
      * @return A list that contains string arrays. Each string array stands for one parsed line of the CSV file
      * @throws IOException if something goes wrong. Exception should be handled at the calling function.
      */
+
+    // TODO: seperate na filter from reader
     public static List<String[]> readCsvToArray(String relativePath, String delimiter, boolean ignoreHeader) throws IOException {
 
         File inputFile = new File(relativePath);
@@ -33,6 +36,10 @@ public class CSVReader {
             if (ignoreHeader) {data.readLine();}
 
             while((line=data.readLine())!=null) {
+                // skip the line if it contains NA values
+                if (containsNaValue(line.split(delimiter))) {
+                    continue;
+                }
                 parsedLines.add(line.split(delimiter));
             }
         } catch (FileNotFoundException fne) {
@@ -40,5 +47,19 @@ public class CSVReader {
         }
 
         return parsedLines;
+    }
+
+    /**
+     * Check if a line contains NA values.
+     *
+     * @param line the line to check
+     * @return true if the line contains NA values, false otherwise
+     */
+    private static boolean containsNaValue(String[] line) {
+
+        String[] naValues = {"na", "n/a", "nan", "null", "nil", "none", "n.a.", "n.a", "n_a", ""};
+
+        return Arrays.stream(line)
+                .anyMatch(s -> (Arrays.asList(naValues).contains(s.toLowerCase())));
     }
 }
