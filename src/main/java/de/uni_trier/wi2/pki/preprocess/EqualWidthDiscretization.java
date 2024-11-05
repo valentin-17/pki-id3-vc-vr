@@ -27,7 +27,7 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
         int binWidth = getbinWidth(examples, numberOfBins, attributeId);
         double [] binCenters = getbinCenters(examples, numberOfBins, attributeId, binWidth);
 
-        //System.out.println("in discretize + binWidth " + binWidth);
+        
 
 
         // Zuweisung jedes Wertes zum nächstgelegenen Bin-Center
@@ -38,7 +38,7 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
             modifyedExample[attributeId] = closestCenter;
             outputList.add(modifyedExample);
         }
-
+      
         return outputList;
     }
 
