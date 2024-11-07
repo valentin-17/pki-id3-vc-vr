@@ -33,7 +33,7 @@ public class EntropyUtils {
      * @return the information gain for a single attribute
      */
     public static double calcInformationGainForAttribute(int attributeIndex, Collection<Object[]> matrix, int labelIndex) {
-        //tmp
+        // Gain(A) = calculateEntropy - calculateRestEntropyForAttribute
         return 0;
     }
 
@@ -45,7 +45,7 @@ public class EntropyUtils {
      */
     public static double calculateEntropy(long[] counts) {
 
-        //tmp
+        //tmp H(E) = - (p/p+n) * log2(p/p+n) - (n/p+n) * log2(n/p+n) für einen bereich mit mehr klassifizierungen
         double entropy = 0;
         return entropy;
     }
@@ -61,7 +61,7 @@ public class EntropyUtils {
      */
     public static double calculateRestEntropyForAttribute(int attributeIndex, Collection<Object[]> matrix, int labelIndex) {
 
-        //tmp
+        //tmp R(A) = sum( |Sv| / |S| * H(Sv) )
         double restEntropy = 0;
         return restEntropy;
     }
@@ -78,7 +78,7 @@ public class EntropyUtils {
      */
     public static double calculateEntropyForAttributeValue(int attributeIndex, Collection<Object[]> matrix, Object value, int labelIndex) {
 
-        //tmp
+        //tmp - (p/p+n) * log2(p/p+n)
         long[] counts = null;
         return calculateEntropy(counts);
     }

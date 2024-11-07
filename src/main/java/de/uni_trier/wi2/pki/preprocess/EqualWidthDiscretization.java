@@ -2,10 +2,7 @@ package de.uni_trier.wi2.pki.preprocess;
 
 import javax.lang.model.element.Element;
 import java.io.Console;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Class that holds logic for discretizing values.
@@ -24,14 +21,14 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
     public List<Object[]> discretize(int numberOfBins, List<Object[]> examples, int attributeId) {
 
         List<Object[]> outputList = new ArrayList<>();
-        int binWidth = getbinWidth(examples, numberOfBins, attributeId);
-        double [] binCenters = getbinCenters(examples, numberOfBins, attributeId, binWidth);
+        List<Object[]> sortedExamples = sortExamplesViaAtribute(examples, attributeId);
 
-        
+        int binWidth = getbinWidth(sortedExamples, numberOfBins, attributeId);
+        double [] binCenters = getbinCenters(sortedExamples, numberOfBins, attributeId, binWidth);
 
 
         // Zuweisung jedes Wertes zum nächstgelegenen Bin-Center
-        for (Object[] example : examples) {
+        for (Object[] example : sortedExamples) {
             double temp_number = ((Number) example[attributeId]).doubleValue();
             double closestCenter = findClosestBinCenter(temp_number, binCenters);
             Object[] modifyedExample = example.clone();
@@ -42,41 +39,26 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
         return outputList;
     }
 
-    //Minimum suchen
-    public static double getMin(List<Object[]> examples, int attributeId) {
-        double min = Double.MAX_VALUE;
-        for (Object[] example : examples) {
-            double value = ((Number) example[attributeId]).doubleValue();
-            if (value < min) {
-                min = value;
-            }
-        }
-        return min;
+    //Minimum
+    private static double getMin(List<Object[]> sortedExamples, int attributeId) {
+        return ((Number) sortedExamples.get(0)[attributeId]).doubleValue();
     }
 
-    //Maximum suchen
-    public static double getMax(List<Object[]> examples, int attributeId) {
-        double max = Double.MIN_VALUE;
-        for (Object[] example : examples) {
-            double value = ((Number) example[attributeId]).doubleValue();
-            if (value > max) {
-                max = value;
-            }
-        }
-        return max;
+    //Maximum
+    private static double getMax(List<Object[]> examples, int attributeId) {
+        return ((Number) examples.get(examples.size() - 1)[attributeId]).doubleValue();
     }
 
     //calculate the bin width
-    public static int getbinWidth(List<Object[]> examples, int numberOfBins, int attributeId) {
+    private static int getbinWidth(List<Object[]> sortedExamples, int numberOfBins, int attributeId) {
 
-        double min = getMin(examples, attributeId);
-        double max = getMax(examples, attributeId);
-        //System.out.println("in binWidth");
+        double min = getMin(sortedExamples, attributeId);
+        double max = getMax(sortedExamples, attributeId);
         return (int) ((max - min) / numberOfBins);
     }
 
     //binCenter berechnen
-    public static double[] getbinCenters(List<Object[]> examples, int numberOfBins, int attributeId, int binWidth) {
+    private static double[] getbinCenters(List<Object[]> examples, int numberOfBins, int attributeId, int binWidth) {
 
         double min = getMin(examples, attributeId);
         double[] binCenters = new double[numberOfBins];
@@ -88,7 +70,7 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
     }
 
     //am nächten liegende binCenter finden
-    public static double findClosestBinCenter(double temp_number, double[] binCenters) {
+    private static double findClosestBinCenter(double temp_number, double[] binCenters) {
         double closestCenter = binCenters[0];
         double minDistance = Math.abs(temp_number - binCenters[0]);
 
@@ -101,5 +83,13 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
         }
 
         return closestCenter;
+    }
+
+    //aort list via attribute
+    private static List<Object[]> sortExamplesViaAtribute(List<Object[]> examples, int attributeId) {
+        List<Object[]> sortedExamples = examples.stream()
+                .sorted(Comparator.comparing(o -> Double.parseDouble(o[attributeId].toString())))
+                .toList();
+        return sortedExamples;
     }
 }
