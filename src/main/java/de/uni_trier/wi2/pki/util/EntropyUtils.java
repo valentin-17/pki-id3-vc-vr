@@ -34,6 +34,7 @@ public class EntropyUtils {
      */
     public static double calcInformationGainForAttribute(int attributeIndex, Collection<Object[]> matrix, int labelIndex) {
         // Gain(A) = calculateEntropy - calculateRestEntropyForAttribute
+
         return 0;
     }
 
@@ -46,7 +47,13 @@ public class EntropyUtils {
     public static double calculateEntropy(long[] counts) {
 
         //tmp H(E) = - (p/p+n) * log2(p/p+n) - (n/p+n) * log2(n/p+n) für einen bereich mit mehr klassifizierungen
+
         double entropy = 0;
+        int size = Math.toIntExact(Arrays.stream(counts).sum());
+        for (long count : counts) {
+            entropy = entropy - ((double) count / size) * (Math.log((double) count / size) / Math.log(2));
+        }
+
         return entropy;
     }
 
@@ -63,6 +70,7 @@ public class EntropyUtils {
 
         //tmp R(A) = sum( |Sv| / |S| * H(Sv) )
         double restEntropy = 0;
+
         return restEntropy;
     }
 
@@ -78,8 +86,28 @@ public class EntropyUtils {
      */
     public static double calculateEntropyForAttributeValue(int attributeIndex, Collection<Object[]> matrix, Object value, int labelIndex) {
 
-        //tmp - (p/p+n) * log2(p/p+n)
-        long[] counts = null;
+        //Filtern der Matrix nach dem Attribut - subset erstellen
+        List<Object> filtertMatrix = new ArrayList<>();
+        for (Object[] row : matrix){
+            if(row[attributeIndex].equals(value)){
+                filtertMatrix.add(row);
+            }
+        }
+
+        //Zählen wie oft das label im subset vorkommt
+        HashMap<Object, Integer> labelCounts = new HashMap<>();
+        for (Object[]row : matrix){
+            Object label = row[labelIndex];
+            labelCounts.put(label, labelCounts.getOrDefault(label, 0) + 1);
+        }
+
+        //Zählen wie oft das label im subset vorkommt
+        long counts[] = new long[labelCounts.size()];
+        int i = 0;
+        for (int count : labelCounts.values()){
+            counts[i++] = count;
+        }
+
         return calculateEntropy(counts);
     }
 
