@@ -36,9 +36,35 @@ public class ID3Utils {
 
     private static DecisionTreeNode createTree(Collection<Object[]> examples, int labelIndex, int maximumDepth, int currentDepth, DecisionTreeNode parent) {
 
-        //tmp
+        if (!validateInput(examples)) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+
         DecisionTreeNode currentNode = null;
+
         return currentNode;
+    }
+
+    /**
+     * Checks if the input Collection has invalid attribute types.
+     *
+     * @param examples The examples to check.
+     * @implNote This operation is parallelized.
+     * @return true if the input is valid, false otherwise.
+     *
+     */
+    private static boolean validateInput(Collection<Object[]> examples) {
+        return examples.parallelStream().anyMatch(o -> Arrays.stream(o).anyMatch(ID3Utils::testAttribute));
+    }
+
+    /**
+     * Tests if the attribute is numeric.
+     *
+     * @param attribute The attribute to test.
+     * @return true if the attribute is a number, false otherwise.
+     */
+    private static boolean testAttribute(Object attribute) {
+        return attribute instanceof Number;
     }
 
     /**
