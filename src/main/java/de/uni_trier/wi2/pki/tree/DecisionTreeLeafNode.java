@@ -44,4 +44,9 @@ public class DecisionTreeLeafNode extends DecisionTreeNode {
         return labelClass;
     }
 
+    @Override
+    public String toString() {
+        return "Attribute: " + attributeIndex + ", Label: " + labelClass;
+    }
+
 }

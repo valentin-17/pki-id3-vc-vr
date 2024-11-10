@@ -2,6 +2,7 @@ package de.uni_trier.wi2.pki.tree;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -48,7 +49,6 @@ public class DecisionTreeNode {
      * @param Object     CSV attribute for which a split is made.
      * @param decisionTreeNode Child decision tree node.
      */
-
     public void addSplit(String Object, DecisionTreeNode decisionTreeNode) {
         splits.put(Object, decisionTreeNode);
     }
@@ -110,4 +110,13 @@ public class DecisionTreeNode {
         return false;
     }
 
+    /**
+     * Represents the current node as a string.
+     *
+     * @return The current node as a string.
+     */
+    @Override
+    public String toString() {
+        return "Attribute: " + attributeIndex;
+    }
 }

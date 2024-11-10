@@ -4,8 +4,10 @@ import de.uni_trier.wi2.pki.io.CSVReader;
 import de.uni_trier.wi2.pki.preprocess.EqualFrequencyDiscretization;
 import de.uni_trier.wi2.pki.preprocess.EqualWidthDiscretization;
 import de.uni_trier.wi2.pki.preprocess.KMeansDiscretizer;
+import de.uni_trier.wi2.pki.tree.DecisionTree;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static de.uni_trier.wi2.pki.util.Helpers.convertToObjectList;
@@ -16,7 +18,7 @@ public class Main {
     public static void main(String[] args) {
         // some constants
         final String FILE_NAME = "housing_data.csv";
-        final int LABEL_ATTR_INDEX = 10;
+        final int LABEL_ATTR_INDEX = 13;
         final String delim = ",";
 
         //discretization params
@@ -39,26 +41,41 @@ public class Main {
             throw new RuntimeException("No data parsed");
         }
 
-        List<Object[]> convertedInput = convertToObjectList(parsedLines);
-        System.out.println("Discretized data: ");
-        printData(kmd.discretize(BINS, convertedInput, ATTRIBUTE_ID));
-
-        /*
         // define data types of the dataset
         ArrayList<Boolean> attrIsContinuous = new ArrayList<>();
         attrIsContinuous.add(0, true);
-        attrIsContinuous.add(1, false);
-        attrIsContinuous.add(2, false);
+        attrIsContinuous.add(1, true);
+        attrIsContinuous.add(2, true);
         attrIsContinuous.add(3, true);
         attrIsContinuous.add(4, true);
         attrIsContinuous.add(5, true);
         attrIsContinuous.add(6, true);
-        attrIsContinuous.add(7, false);
-        attrIsContinuous.add(8, false);
+        attrIsContinuous.add(7, true);
+        attrIsContinuous.add(8, true);
         attrIsContinuous.add(9, true);
-        attrIsContinuous.add(10, false);
-        */
+        attrIsContinuous.add(10, true);
+        attrIsContinuous.add(11, true);
+        attrIsContinuous.add(12, true);
+        attrIsContinuous.add(13, true);
         // Train model, evaluate model, write XML, ...
+
+        List<Object[]> discretizedData = convertToObjectList(parsedLines);
+
+        for (int i = 0; i < attrIsContinuous.size(); i++) {
+            if (attrIsContinuous.get(i)) {
+                ATTRIBUTE_ID = i;
+                discretizedData = kmd.discretize(BINS, discretizedData, ATTRIBUTE_ID);
+            }
+        }
+
+        //System.out.println("Discretized data: ");
+        //printData(discretizedData);
+
+        DecisionTree dt = new DecisionTree(LABEL_ATTR_INDEX, discretizedData);
+
+        System.out.println(dt.getSplits().toString());
+
+        //System.out.printf("Decision Tree:" + dt);
     }
 
 }
