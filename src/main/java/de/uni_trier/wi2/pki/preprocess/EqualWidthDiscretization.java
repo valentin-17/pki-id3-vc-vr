@@ -24,18 +24,27 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
         List<Object[]> sortedExamples = sortExamplesViaAtribute(examples, attributeId);
 
         int binWidth = getbinWidth(sortedExamples, numberOfBins, attributeId);
-        double [] binCenters = getbinCenters(sortedExamples, numberOfBins, attributeId, binWidth);
 
+        double min = getMin(sortedExamples, attributeId);
 
-        // Zuweisung jedes Wertes zum nächstgelegenen Bin-Center
-        for (Object[] example : sortedExamples) {
-            double temp_number = ((Number) example[attributeId]).doubleValue();
-            double closestCenter = findClosestBinCenter(temp_number, binCenters);
-            Object[] modifyedExample = example.clone();
-            modifyedExample[attributeId] = closestCenter;
-            outputList.add(modifyedExample);
+        for (int i = 1; i <= numberOfBins; i++) {
+
+            double lowerBound = min + (i - 1) * binWidth;
+            double upperBound = min + (binWidth * i);
+
+            for (Object[] example : sortedExamples){
+                double temp_number = ((Number) example[attributeId]).doubleValue();
+                if (temp_number == min){
+                    example[attributeId] = 1;
+                    outputList.add(example);
+                }
+                else if (temp_number >= lowerBound && temp_number < upperBound){
+                    example[attributeId] = i;
+                    outputList.add(example);
+                }
+            }
         }
-      
+
         return outputList;
     }
 
@@ -57,35 +66,7 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
         return (int) ((max - min) / numberOfBins);
     }
 
-    //binCenter berechnen
-    private static double[] getbinCenters(List<Object[]> examples, int numberOfBins, int attributeId, int binWidth) {
-
-        double min = getMin(examples, attributeId);
-        double[] binCenters = new double[numberOfBins];
-        for (int i = 0; i < numberOfBins; i++) {
-            binCenters[i] = min + binWidth * (i + 0.5);
-        }
-
-        return binCenters;
-    }
-
-    //am nächten liegende binCenter finden
-    private static double findClosestBinCenter(double temp_number, double[] binCenters) {
-        double closestCenter = binCenters[0];
-        double minDistance = Math.abs(temp_number - binCenters[0]);
-
-        for (double center : binCenters) {
-            double distance = Math.abs(temp_number - center);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestCenter = center;
-            }
-        }
-
-        return closestCenter;
-    }
-
-    //aort list via attribute
+    //sort list via attribute
     private static List<Object[]> sortExamplesViaAtribute(List<Object[]> examples, int attributeId) {
         List<Object[]> sortedExamples = examples.stream()
                 .sorted(Comparator.comparing(o -> Double.parseDouble(o[attributeId].toString())))
