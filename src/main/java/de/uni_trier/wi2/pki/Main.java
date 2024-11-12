@@ -5,6 +5,7 @@ import de.uni_trier.wi2.pki.preprocess.EqualFrequencyDiscretization;
 import de.uni_trier.wi2.pki.preprocess.EqualWidthDiscretization;
 import de.uni_trier.wi2.pki.preprocess.KMeansDiscretizer;
 import de.uni_trier.wi2.pki.tree.DecisionTree;
+import de.uni_trier.wi2.pki.util.ID3Utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public class Main {
         //System.out.println("Discretized data: ");
         //printData(discretizedData);
 
-        DecisionTree dt = new DecisionTree(LABEL_ATTR_INDEX, discretizedData);
+        DecisionTree dt = ID3Utils.createTree(discretizedData, LABEL_ATTR_INDEX);
 
         System.out.println(dt.getSplits().toString());
 

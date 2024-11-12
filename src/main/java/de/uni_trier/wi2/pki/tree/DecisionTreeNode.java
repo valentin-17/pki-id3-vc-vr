@@ -25,7 +25,6 @@ public class DecisionTreeNode {
         splits = new HashMap<>();
     }
 
-    // TODO: Nicht im Baum zwischenspeichern
     private Collection<Object[]> elements;
 
     /**

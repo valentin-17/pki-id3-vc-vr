@@ -33,7 +33,7 @@ public class EntropyUtils {
      * @return the information gain for a single attribute
      */
     public static double calcInformationGainForAttribute(int attributeIndex, Collection<Object[]> matrix, int labelIndex) {
-        //tmp
+
         return 0;
     }
 

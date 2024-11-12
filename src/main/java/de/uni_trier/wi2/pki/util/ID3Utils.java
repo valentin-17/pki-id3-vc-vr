@@ -44,36 +44,35 @@ public class ID3Utils {
     }
 
     private static DecisionTreeNode createTree(Collection<Object[]> examples, int labelIndex, int maximumDepth, int currentDepth, DecisionTreeNode parent) {
+        int efficientAttributeIndex = selectEfficientAttribute(examples, labelIndex);
+        DecisionTreeNode currentNode = new DecisionTreeNode(parent, examples, efficientAttributeIndex);
         ArrayList<Object[]> examplesList = new ArrayList<>(examples);
-        int efficientAttributeIndex = selectEfficientAttribute(examplesList, labelIndex);
-        DecisionTreeNode rootNode = new DecisionTreeNode(parent, examplesList, efficientAttributeIndex);
 
         System.out.println("Efficient Attribute Index: " + efficientAttributeIndex);
 
-        /* If the examples are empty, return a leaf node with an appropriate class */
-        // TODO: figure out what an appropriate class is
+        /* If the examples are empty, return a leaf node with the dominant class of the parent node */
         if (examplesList.isEmpty()) {
-            return new DecisionTreeLeafNode(rootNode, examplesList, getDominantClass(examplesList, labelIndex));
+            return new DecisionTreeLeafNode(currentNode, examplesList, getDominantClass(parent.getElements(), labelIndex));
         }
 
         /* If all examples have the same label, return a leaf node with the corresponding label */
         if (examplesList.stream().allMatch(o -> o[labelIndex].equals(examplesList.get(0)[labelIndex]))) {
-            return new DecisionTreeLeafNode(rootNode, examplesList, (String) examplesList.get(0)[labelIndex]);
+            return new DecisionTreeLeafNode(currentNode, examplesList, (String) examplesList.get(0)[labelIndex]);
         }
 
         /* If the maximum depth of the tree is reached, return a leaf node with the most common label */
         if (currentDepth == maximumDepth) {
-            return new DecisionTreeLeafNode(rootNode, examplesList, getDominantClass(examplesList, labelIndex));
+            return new DecisionTreeLeafNode(currentNode, examplesList, getDominantClass(examplesList, labelIndex));
         }
         /* Otherwise, recursively create a new decision tree node */
         else {
             Map<Object, List<Object[]>> partitions = partitionExamples(examplesList, efficientAttributeIndex);
             for (Map.Entry<Object, List<Object[]>> entry : partitions.entrySet()) {
-                rootNode.addSplit(entry.getKey().toString(), createTree(entry.getValue(), labelIndex, maximumDepth, currentDepth + 1, rootNode));
+                currentNode.addSplit(entry.getKey().toString(), createTree(entry.getValue(), labelIndex, maximumDepth, currentDepth + 1, currentNode));
             }
         }
 
-        return rootNode;
+        return currentNode;
     }
 
     /**
@@ -124,9 +123,19 @@ public class ID3Utils {
      * @return the index of the attribute to select next.
      */
     public static int selectEfficientAttribute(Collection<Object[]> examples, int labelIndex) {
-        return calcInformationGain(examples, labelIndex)
-                /* Find the index of the maximum information gain */
-                .indexOf(Collections.max(calcInformationGain(examples, labelIndex)));
+        int attributeIndex = 0;
+
+        try {
+            if (calcInformationGain(examples, labelIndex) != null) {
+                attributeIndex = calcInformationGain(examples, labelIndex)
+                        /* Find the index of the maximum information gain */
+                        .indexOf(Collections.max(calcInformationGain(examples, labelIndex)));
+            }
+        } catch (NullPointerException npe) {
+            System.out.println("Error in selectEfficientAttribute: " + npe.getMessage());
+        }
+
+        return attributeIndex;
     }
 
     /**
