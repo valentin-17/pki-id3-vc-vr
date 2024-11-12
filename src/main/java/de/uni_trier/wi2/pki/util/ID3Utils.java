@@ -8,6 +8,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static de.uni_trier.wi2.pki.util.EntropyUtils.calcInformationGain;
+import static de.uni_trier.wi2.pki.util.Helpers.printCollectionOfObjectArrays;
+import static de.uni_trier.wi2.pki.util.Helpers.printListLikeMapEntries;
 
 /**
  * Utility class for creating a decision tree with the ID3 algorithm.
@@ -22,12 +24,6 @@ public class ID3Utils {
      * @return The root node of the decision tree
      */
     public static DecisionTree createTree(Collection<Object[]> examples, int labelIndex) {
-
-        /* validating the given input data for any numeric values */
-        if (!validateInput(examples)) {
-            throw new IllegalArgumentException("Invalid input");
-        }
-
         return createTree(examples, labelIndex, -1);
     }
 
@@ -44,51 +40,96 @@ public class ID3Utils {
     }
 
     private static DecisionTreeNode createTree(Collection<Object[]> examples, int labelIndex, int maximumDepth, int currentDepth, DecisionTreeNode parent) {
-        int efficientAttributeIndex = selectEfficientAttribute(examples, labelIndex);
-        DecisionTreeNode currentNode = new DecisionTreeNode(parent, examples, efficientAttributeIndex);
-        ArrayList<Object[]> examplesList = new ArrayList<>(examples);
 
+        /* validating the given input data for any numeric values */
+        if (!validateInput(examples)) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+
+        int efficientAttributeIndex = selectEfficientAttribute(examples, labelIndex);
+        ArrayList<Object[]> examplesList = new ArrayList<>(examples);
+        Map<Object, List<Object[]>> partitions;
+        DecisionTree dt = new DecisionTree(efficientAttributeIndex, examplesList);
+
+        System.out.println("Current Depth: " + currentDepth);
         System.out.println("Efficient Attribute Index: " + efficientAttributeIndex);
 
         /* If the examples are empty, return a leaf node with the dominant class of the parent node */
         if (examplesList.isEmpty()) {
-            return new DecisionTreeLeafNode(currentNode, examplesList, getDominantClass(parent.getElements(), labelIndex));
+            return new DecisionTreeLeafNode(dt, examplesList, getDominantClass(parent.getElements(), labelIndex));
         }
 
+        List<String> allLabelsOfExampleList = examplesList.stream().map(o -> o[labelIndex].toString()).toList();
+        System.out.println("All Class Labels of ExamplesList: " + allLabelsOfExampleList);
+        System.out.println("Example List: \n" + printCollectionOfObjectArrays(examplesList));
+
         /* If all examples have the same label, return a leaf node with the corresponding label */
-        if (examplesList.stream().allMatch(o -> o[labelIndex].equals(examplesList.get(0)[labelIndex]))) {
-            return new DecisionTreeLeafNode(currentNode, examplesList, (String) examplesList.get(0)[labelIndex]);
+        if (allLabelsSame(examplesList, labelIndex)) {
+            return new DecisionTreeLeafNode(dt, examplesList, examplesList.get(0)[labelIndex].toString());
         }
 
         /* If the maximum depth of the tree is reached, return a leaf node with the most common label */
         if (currentDepth == maximumDepth) {
-            return new DecisionTreeLeafNode(currentNode, examplesList, getDominantClass(examplesList, labelIndex));
+            return new DecisionTreeLeafNode(dt, examplesList, getDominantClass(examplesList, labelIndex));
         }
         /* Otherwise, recursively create a new decision tree node */
         else {
-            Map<Object, List<Object[]>> partitions = partitionExamples(examplesList, efficientAttributeIndex);
+            partitions = partitionExamples(examplesList, efficientAttributeIndex);
+            System.out.println("* of Partitions: " + partitions.size());
+            System.out.println("Partitions: \n" + printListLikeMapEntries(partitions));
+
+            /* If there is only one partition, return a leaf node with the most common label */
+            if (partitions.size() == 1) {
+                return new DecisionTreeLeafNode(dt, examplesList, getDominantClass(examplesList, labelIndex));
+            }
+
             for (Map.Entry<Object, List<Object[]>> entry : partitions.entrySet()) {
-                currentNode.addSplit(entry.getKey().toString(), createTree(entry.getValue(), labelIndex, maximumDepth, currentDepth + 1, currentNode));
+                System.out.println("Adding Split for Key: " + entry.getKey());
+                System.out.println("Splitted Values: \n" + printCollectionOfObjectArrays(entry.getValue()));
+                dt.addSplit(entry.getKey().toString(), createTree(entry.getValue(), labelIndex, maximumDepth, currentDepth + 1, dt));
             }
         }
 
-        return currentNode;
+        return dt;
+    }
+
+    /**
+     * Checks if all labels are the same.
+     *
+     * @param examples The examples to check.
+     * @param labelIndex   The index of the label attribute.
+     * @return true if all labels are the same, false otherwise.
+     */
+    private static boolean allLabelsSame(ArrayList<Object[]> examples, int labelIndex) {
+        return examples.stream()
+                .allMatch(o -> o[labelIndex].equals(examples.get(0)[labelIndex]));
     }
 
     /**
      * Partitions the examples based on the attribute index.
      *
-     * @param examplesList             The examples to partition.
+     * @param examples             The examples to partition.
      * @param efficientAttributeIndex  The index of the attribute to partition by.
      * @return A map of the partitioned examples.
      */
-    private static Map<Object, List<Object[]>> partitionExamples(List<Object[]> examplesList, int efficientAttributeIndex) {
+    private static Map<Object, List<Object[]>> partitionExamples(Collection<Object[]> examples, int efficientAttributeIndex) {
         Map<Object, List<Object[]>> partitions = new HashMap<>();
+        //Set<Object> uniqueValues = new HashSet<>();
 
-        for (Object[] example : examplesList) {
+        for (Object[] example : examples) {
             Object attributeValue = example[efficientAttributeIndex];
+            //uniqueValues.add(attributeValue);
+            /* Creates a map where key is attributeValue and value contains all examples with the given attributeValue */
             partitions.computeIfAbsent(attributeValue, (k -> new ArrayList<>())).add(example);
         }
+
+        // Check for homogeneous attribute values
+        /*
+        if (uniqueValues.size() == 1) {
+            // All attribute values are the same, return a single partition
+            return Collections.singletonMap(uniqueValues.iterator().next(), new ArrayList<>(examples));
+        }
+         */
 
         return partitions;
     }
@@ -148,7 +189,7 @@ public class ID3Utils {
     public static String getDominantClass(Collection<Object[]> examples, int labelIndex) {
         return examples.stream()
                 /* Group by the label index and count the occurrences */
-                .collect(Collectors.groupingBy(o -> (String) o[labelIndex], Collectors.counting()))
+                .collect(Collectors.groupingBy(o -> o[labelIndex].toString(), Collectors.counting()))
                 /* Find the maximum count */
                 .entrySet().stream().max(Map.Entry.comparingByValue())
                 /* Return the class name */

@@ -41,41 +41,4 @@ public class DecisionTree extends DecisionTreeNode {
 
         return results;
     }
-
-    /**
-     * Print the tree.
-     *
-     * @return the tree as a string representation
-     */
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        buildString(sb, this, 0);
-        return sb.toString();
-    }
-
-    /**
-     * Build the string representation of the tree.
-     *
-     * @param sb    the string builder to append to
-     * @param node  the current node
-     * @param depth the current depth
-     */
-    private void buildString(StringBuilder sb, DecisionTreeNode node, int depth) {
-        if (node == null) {
-            return;
-        }
-
-        //sb.append("  ".repeat(Math.max(0, depth)));
-        sb.append(node).append("\n");
-
-        if (node instanceof DecisionTreeLeafNode) {
-            return;
-        }
-        if (node.splits != null) {
-            for (Map.Entry<String, DecisionTreeNode> entry : node.splits.entrySet()) {
-                buildString(sb, entry.getValue(), depth + 1);
-            }
-        }
-    }
 }

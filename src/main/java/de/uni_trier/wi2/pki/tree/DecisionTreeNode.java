@@ -108,14 +108,4 @@ public class DecisionTreeNode {
     public boolean isLeafNode() {
         return false;
     }
-
-    /**
-     * Represents the current node as a string.
-     *
-     * @return The current node as a string.
-     */
-    @Override
-    public String toString() {
-        return "Attribute: " + attributeIndex;
-    }
 }
