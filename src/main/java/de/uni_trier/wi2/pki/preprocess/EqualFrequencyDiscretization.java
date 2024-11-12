@@ -2,6 +2,7 @@ package de.uni_trier.wi2.pki.preprocess;
 
 import de.uni_trier.wi2.pki.util.Helpers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -22,14 +23,17 @@ public class EqualFrequencyDiscretization extends BinningDiscretizer {
     public List<Object[]> discretize(int numberOfBins, List<Object[]> examples, int attributeId) {
         int numberOfExamples = examples.size();
         int numberOfExamplesPerBin = numberOfExamples / numberOfBins;
+        String header = examples.get(0)[attributeId].toString();
+        ArrayList<Object[]> examplesWithoutHeader = new ArrayList<>(examples);
+        examplesWithoutHeader.remove(0);
 
         /* sort the given examples by the given attribute */
-        List<Object[]> sortedExamples = examples.stream()
+        List<Object[]> sortedExamples = examplesWithoutHeader.stream()
                 .sorted(Comparator.comparing(o -> Double.parseDouble(o[attributeId].toString())))
                 .toList();
 
         /* create bin names */
-        String[] binNames = createBinNames(sortedExamples, attributeId, numberOfExamplesPerBin, numberOfBins);
+        String[] binNames = createBinNames(sortedExamples, attributeId, numberOfExamplesPerBin, numberOfBins, header);
 
         /* loop through the sorted examples and assign them to bins */
         for (int i = 0; i < numberOfBins; i++) {
@@ -70,17 +74,17 @@ public class EqualFrequencyDiscretization extends BinningDiscretizer {
      * @param numberOfBins           The number of bins.
      * @return the array of bin names.
      */
-    private String[] createBinNames(List<Object[]> examples, int attributeId, int numberOfExamplesPerBin, int numberOfBins) {
+    private String[] createBinNames(List<Object[]> examples, int attributeId, int numberOfExamplesPerBin, int numberOfBins, String header) {
         String[] binNames = new String[numberOfBins];
 
         for (int i = 0; i < numberOfBins; i++) {
             int startIdx = i * numberOfExamplesPerBin;                                                                  /* determine the index of the starting example */
-            int endIdx = (i == numberOfBins - 1) ? examples.size() - 1                                                  /* determine the index of the last example, */
+            int endIdx = (i == numberOfBins - 1) ? examples.size() - 1                                     /* determine the index of the last example, */
                           : (i + 1) * numberOfExamplesPerBin - 1;                                                       /* if this is the last bin extend the range to include all examples remaining*/
             String startVal = examples.get(startIdx)[attributeId].toString();
             String endVal = examples.get(endIdx)[attributeId].toString();
 
-            binNames[i] = String.format("BinId %d: [%s, %s]", i, startVal, endVal);
+            binNames[i] = String.format("%s: [%s; %s]", header, startVal, endVal);
         }
 
         return binNames;

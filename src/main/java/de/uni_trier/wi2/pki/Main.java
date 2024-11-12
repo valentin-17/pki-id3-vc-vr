@@ -1,6 +1,7 @@
 package de.uni_trier.wi2.pki;
 
 import de.uni_trier.wi2.pki.io.CSVReader;
+import de.uni_trier.wi2.pki.io.XMLWriter;
 import de.uni_trier.wi2.pki.preprocess.EqualFrequencyDiscretization;
 import de.uni_trier.wi2.pki.preprocess.EqualWidthDiscretization;
 import de.uni_trier.wi2.pki.preprocess.KMeansDiscretizer;
@@ -18,21 +19,21 @@ public class Main {
 
     public static void main(String[] args) {
         // some constants
-        final String FILE_NAME = "housing_data.csv";
-        final int LABEL_ATTR_INDEX = 13;
-        final String delim = ",";
+        final String FILE_NAME = "churn_data.csv";
+        final int LABEL_ATTR_INDEX = 0;
+        final String delim = ";";
 
         //discretization params
         EqualFrequencyDiscretization efd = new EqualFrequencyDiscretization();
         EqualWidthDiscretization ewd = new EqualWidthDiscretization();
         KMeansDiscretizer kmd = new KMeansDiscretizer();
-        int BINS = 4;
-        int ATTRIBUTE_ID = 13;
+        int BINS = 6;
+        int ATTRIBUTE_ID;
 
         // parse CSV data
         List<String[]> parsedLines = null;
         try {
-            parsedLines = CSVReader.readCsvToArray("target/classes/" + FILE_NAME, delim, true);
+            parsedLines = CSVReader.readCsvToArray("target/classes/" + FILE_NAME, delim, false);
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
@@ -45,8 +46,8 @@ public class Main {
         // define data types of the dataset
         ArrayList<Boolean> attrIsContinuous = new ArrayList<>();
         attrIsContinuous.add(0, true);
-        attrIsContinuous.add(1, true);
-        attrIsContinuous.add(2, true);
+        attrIsContinuous.add(1, false);
+        attrIsContinuous.add(2, false);
         attrIsContinuous.add(3, true);
         attrIsContinuous.add(4, true);
         attrIsContinuous.add(5, true);
@@ -55,13 +56,11 @@ public class Main {
         attrIsContinuous.add(8, true);
         attrIsContinuous.add(9, true);
         attrIsContinuous.add(10, true);
-        attrIsContinuous.add(11, true);
-        attrIsContinuous.add(12, true);
-        attrIsContinuous.add(13, true);
         // Train model, evaluate model, write XML, ...
 
         List<Object[]> discretizedData = convertToObjectList(parsedLines);
 
+        /*
         for (int i = 0; i < attrIsContinuous.size(); i++) {
             if (attrIsContinuous.get(i)) {
                 ATTRIBUTE_ID = i;
@@ -69,14 +68,23 @@ public class Main {
             }
         }
 
-        //System.out.println("Discretized data: ");
+        System.out.println("Discretized data: ");
         //printData(discretizedData);
 
-        DecisionTree dt = ID3Utils.createTree(discretizedData, LABEL_ATTR_INDEX);
+        List<Object[]> discretizedDataSmall = discretizedData.subList(0, 50);
 
-        System.out.println(dt.getSplits().toString());
+        printData(discretizedDataSmall);
 
-        //System.out.printf("Decision Tree:" + dt);
+        DecisionTree dt = ID3Utils.createTree(discretizedDataSmall, LABEL_ATTR_INDEX);
+
+        try {
+            XMLWriter.writeXML("target/classes/decision_tree.xml", dt);
+        } catch (IOException ioe) {
+            System.out.println(ioe.getMessage());
+        }
+
+         */
+
+        printData(efd.discretize(BINS, discretizedData, 0));
     }
-
 }

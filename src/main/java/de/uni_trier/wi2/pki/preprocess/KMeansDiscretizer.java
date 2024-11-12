@@ -18,37 +18,40 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      * @return the list of discretized examples.
      */
     public List<Object[]> discretize(int numberOfBins, List<Object[]> examples, int attributeId) {
+        String header = (String) examples.get(0)[attributeId];
+        String[] binNames;
+        ArrayList<Object[]> examplesWithoutHeader = new ArrayList<>(examples);
         double quality_new = Double.MAX_VALUE;
         double quality_old = 0;
-        double epsilon = 0.1;
-        int[] clusters = new int[examples.size()];
+        double epsilon = 0.01;
         int iterCounter = 0;
-
-        /* initialize centroids */
         double[] values = null;
         double[] centroids = null;
 
+        /* remove header */
+        examplesWithoutHeader.remove(0);
+
+        int[] clusters = new int[examplesWithoutHeader.size()];
+
         /* check if attribute to discretize is numeric */
         try {
-            values = examples.stream().mapToDouble(e -> Double.parseDouble((String) e[attributeId])).toArray();
+            values = examplesWithoutHeader.stream().mapToDouble(e -> Double.parseDouble((String) e[attributeId])).toArray();
             centroids = initializeCentroids(values, numberOfBins);
         } catch (NumberFormatException nfe) {
-            System.out.println("Could not initialize Centroids. Attribute must be numeric! \n" + nfe.getMessage());
+            System.out.println("Could not initialize Centroids. Attribute must be numeric! " + nfe.getMessage());
         }
 
         /* check if values and centroids are initialized */
         assert values != null;
         assert centroids != null;
 
-        System.out.println("K-Means initialization completed with the following centroids: " + Arrays.toString(centroids));
-
         /* clustering loop */
         while (Math.abs(quality_old - quality_new) >= epsilon) {
             iterCounter++;
 
             /* Assign each example to the nearest centroid */
-            for (int i = 0; i < examples.size(); i++) {
-                Object[] example = examples.get(i);
+            for (int i = 0; i < examplesWithoutHeader.size(); i++) {
+                Object[] example = examplesWithoutHeader.get(i);
                 int nearestCentroid = findNearestCentroid(Double.parseDouble((String) example[attributeId]), centroids);
 
                 clusters[i] = nearestCentroid;
@@ -62,8 +65,60 @@ public class KMeansDiscretizer extends BinningDiscretizer {
             quality_new = calculateQuality(values, centroids, clusters);
         }
 
+        binNames = createBinNames(numberOfBins, values, clusters, header);
+
+        /* Print the final bins */
+        System.out.println("Final bins with their bounds:");
+        for (String binName : binNames) {
+            System.out.println(binName);
+        }
+
         System.out.println("KMeans clustering completed after " + iterCounter + " iterations.");
-        return examples.stream().peek(e -> e[attributeId] = clusters[examples.indexOf(e)]).toList();
+
+        /* Assign bin names to examples */
+        return examplesWithoutHeader.stream().peek(e -> {
+            if (examples.indexOf(e) > 0) {
+                e[attributeId] = binNames[clusters[examples.indexOf(e) - 1]];
+            }
+        }).toList();
+    }
+
+    /**
+     * Creates bin names based on the cluster assignments.
+     *
+     * @param numberOfBins The number of bins.
+     * @param values       The original values.
+     * @param clusters     The current cluster assignments.
+     * @param header       The header of the attribute to discretize.
+     * @return An array of bin names.
+     */
+    private String[] createBinNames(int numberOfBins, double[] values, int[] clusters, String header) {
+        String[] binNames = new String[numberOfBins];
+        double[] minValues = new double[numberOfBins];
+        double[] maxValues = new double[numberOfBins];
+        Arrays.fill(minValues, Double.POSITIVE_INFINITY);
+        Arrays.fill(maxValues, Double.NEGATIVE_INFINITY);
+
+        /* Calculate the min and max values for each bin */
+        for (int i = 0; i < clusters.length; i++) {
+            int cluster = clusters[i];
+            double value = values[i];
+            if (value < minValues[cluster]) {
+                minValues[cluster] = value;
+            }
+            if (value > maxValues[cluster]) {
+                maxValues[cluster] = value;
+            }
+        }
+
+        /* Create bin names */
+        for (int i = 0; i < numberOfBins; i++) {
+            double lowerBound = minValues[i];
+            double upperBound = maxValues[i];
+            binNames[i] = String.format("%s: [%s; %s]", header, lowerBound, upperBound);
+        }
+
+        return binNames;
     }
 
     /**
@@ -149,8 +204,6 @@ public class KMeansDiscretizer extends BinningDiscretizer {
             quality += calculateDistanceSumToCentroid(values, centroids, clusters, i);
         }
 
-        // DEBUG
-        System.out.println("New quality calculated: " + quality);
         return quality;
     }
 
