@@ -1,11 +1,13 @@
 package de.uni_trier.wi2.pki.preprocess;
 
-import de.uni_trier.wi2.pki.util.Helpers;
+import de.uni_trier.wi2.pki.Main;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+
+import static de.uni_trier.wi2.pki.util.Helpers.printData;
 
 /**
  * Class that holds logic for discretizing values.
@@ -23,17 +25,15 @@ public class EqualFrequencyDiscretization extends BinningDiscretizer {
     public List<Object[]> discretize(int numberOfBins, List<Object[]> examples, int attributeId) {
         int numberOfExamples = examples.size();
         int numberOfExamplesPerBin = numberOfExamples / numberOfBins;
-        String header = examples.get(0)[attributeId].toString();
-        ArrayList<Object[]> examplesWithoutHeader = new ArrayList<>(examples);
-        examplesWithoutHeader.remove(0);
+        ArrayList<Object[]> examplesList = new ArrayList<>(examples);
 
         /* sort the given examples by the given attribute */
-        List<Object[]> sortedExamples = examplesWithoutHeader.stream()
+        List<Object[]> sortedExamples = examplesList.stream()
                 .sorted(Comparator.comparing(o -> Double.parseDouble(o[attributeId].toString())))
                 .toList();
 
         /* create bin names */
-        String[] binNames = createBinNames(sortedExamples, attributeId, numberOfExamplesPerBin, numberOfBins, header);
+        String[] binNames = createBinNames(sortedExamples, attributeId, numberOfExamplesPerBin, numberOfBins);
 
         /* loop through the sorted examples and assign them to bins */
         for (int i = 0; i < numberOfBins; i++) {
@@ -74,7 +74,7 @@ public class EqualFrequencyDiscretization extends BinningDiscretizer {
      * @param numberOfBins           The number of bins.
      * @return the array of bin names.
      */
-    private String[] createBinNames(List<Object[]> examples, int attributeId, int numberOfExamplesPerBin, int numberOfBins, String header) {
+    private String[] createBinNames(List<Object[]> examples, int attributeId, int numberOfExamplesPerBin, int numberOfBins) {
         String[] binNames = new String[numberOfBins];
 
         for (int i = 0; i < numberOfBins; i++) {
@@ -84,7 +84,7 @@ public class EqualFrequencyDiscretization extends BinningDiscretizer {
             String startVal = examples.get(startIdx)[attributeId].toString();
             String endVal = examples.get(endIdx)[attributeId].toString();
 
-            binNames[i] = String.format("%s: [%s; %s]", header, startVal, endVal);
+            binNames[i] = String.format("%s: [%s; %s]", Main.HEADER[attributeId], startVal, endVal);
         }
 
         return binNames;

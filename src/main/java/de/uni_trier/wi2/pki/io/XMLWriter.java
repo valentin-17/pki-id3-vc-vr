@@ -1,5 +1,6 @@
 package de.uni_trier.wi2.pki.io;
 
+import de.uni_trier.wi2.pki.Main;
 import de.uni_trier.wi2.pki.tree.DecisionTree;
 import de.uni_trier.wi2.pki.tree.DecisionTreeLeafNode;
 import de.uni_trier.wi2.pki.tree.DecisionTreeNode;
@@ -77,7 +78,7 @@ public class XMLWriter {
             xmlParentElem.addContent(leafElem);
         } else {
             Element nodeElem = new Element(N_NODE);
-            nodeElem.setAttribute(A_ATTRIBUTE, String.valueOf(decTreeNode.getAttributeIndex()));
+            nodeElem.setAttribute(A_ATTRIBUTE, String.valueOf(Main.HEADER[decTreeNode.getAttributeIndex()]));
             xmlParentElem.addContent(nodeElem);
 
             for (Map.Entry<String, DecisionTreeNode> entry : decTreeNode.getSplits().entrySet()) {

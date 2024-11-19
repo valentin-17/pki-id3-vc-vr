@@ -40,57 +40,61 @@ public class ID3Utils {
     }
 
     private static DecisionTreeNode createTree(Collection<Object[]> examples, int labelIndex, int maximumDepth, int currentDepth, DecisionTreeNode parent) {
-
-        /* validating the given input data for any numeric values */
-        if (!validateInput(examples)) {
-            throw new IllegalArgumentException("Invalid input");
-        }
-
         int efficientAttributeIndex = selectEfficientAttribute(examples, labelIndex);
         ArrayList<Object[]> examplesList = new ArrayList<>(examples);
         Map<Object, List<Object[]>> partitions;
-        DecisionTree dt = new DecisionTree(efficientAttributeIndex, examplesList);
+        DecisionTree root = null;
+        DecisionTreeNode currentNode = null;
 
-        System.out.println("Current Depth: " + currentDepth);
-        System.out.println("Efficient Attribute Index: " + efficientAttributeIndex);
+        /* Only create a root node if the parent is null */
+        if (parent == null) {
+            root = new DecisionTree(efficientAttributeIndex, examplesList);
+            currentNode = root;
+        } else {
+            currentNode = new DecisionTreeNode(parent, examplesList, efficientAttributeIndex);
+        }
+
+        // DEBUG
+        StringBuilder depth = new StringBuilder();
+        depth.append("-".repeat(Math.max(0, currentDepth)));
+        System.out.println(depth + "Current Depth: " + currentDepth);
+        System.out.println(depth + "Efficient Attribute Index: " + efficientAttributeIndex);
 
         /* If the examples are empty, return a leaf node with the dominant class of the parent node */
         if (examplesList.isEmpty()) {
-            return new DecisionTreeLeafNode(dt, examplesList, getDominantClass(parent.getElements(), labelIndex));
+            return new DecisionTreeLeafNode(parent, examplesList, getDominantClass(parent.getElements(), labelIndex));
         }
-
-        List<String> allLabelsOfExampleList = examplesList.stream().map(o -> o[labelIndex].toString()).toList();
-        System.out.println("All Class Labels of ExamplesList: " + allLabelsOfExampleList);
-        System.out.println("Example List: \n" + printCollectionOfObjectArrays(examplesList));
 
         /* If all examples have the same label, return a leaf node with the corresponding label */
         if (allLabelsSame(examplesList, labelIndex)) {
-            return new DecisionTreeLeafNode(dt, examplesList, examplesList.get(0)[labelIndex].toString());
+            return new DecisionTreeLeafNode(parent, examplesList, examplesList.get(0)[labelIndex].toString());
         }
 
         /* If the maximum depth of the tree is reached, return a leaf node with the most common label */
         if (currentDepth == maximumDepth) {
-            return new DecisionTreeLeafNode(dt, examplesList, getDominantClass(examplesList, labelIndex));
+            return new DecisionTreeLeafNode(parent, examplesList, getDominantClass(examplesList, labelIndex));
         }
+
         /* Otherwise, recursively create a new decision tree node */
-        else {
-            partitions = partitionExamples(examplesList, efficientAttributeIndex);
-            System.out.println("* of Partitions: " + partitions.size());
-            System.out.println("Partitions: \n" + printListLikeMapEntries(partitions));
+        partitions = partitionExamples(examplesList, efficientAttributeIndex);
+        System.out.println(depth + "* of Partitions: " + partitions.size());
 
-            /* If there is only one partition, return a leaf node with the most common label */
-            if (partitions.size() == 1) {
-                return new DecisionTreeLeafNode(dt, examplesList, getDominantClass(examplesList, labelIndex));
-            }
-
+        /* If there are multiple partitions, create a new split for each partition */
+        if (partitions.size() > 1) {
             for (Map.Entry<Object, List<Object[]>> entry : partitions.entrySet()) {
-                System.out.println("Adding Split for Key: " + entry.getKey());
-                System.out.println("Splitted Values: \n" + printCollectionOfObjectArrays(entry.getValue()));
-                dt.addSplit(entry.getKey().toString(), createTree(entry.getValue(), labelIndex, maximumDepth, currentDepth + 1, dt));
+                System.out.println(depth + "* of Partitions: " + partitions.size());
+                System.out.println(depth + "Adding Split for Key: " + entry.getKey());
+                String attribute = entry.getKey().toString();
+                DecisionTreeNode node = createTree(entry.getValue(), labelIndex, maximumDepth, currentDepth + 1, currentNode);
+                currentNode.addSplit(attribute, node);
             }
+        /* If there is only one partition, return a leaf node with the most common label */
+        } else if (partitions.size() == 1) {
+            System.out.println(depth + "Only one Partition found. Returning Leaf Node with Dominant Class.");
+            return new DecisionTreeLeafNode(currentNode, examplesList, getDominantClass(examplesList, labelIndex));
         }
 
-        return dt;
+        return currentNode;
     }
 
     /**
@@ -114,46 +118,14 @@ public class ID3Utils {
      */
     private static Map<Object, List<Object[]>> partitionExamples(Collection<Object[]> examples, int efficientAttributeIndex) {
         Map<Object, List<Object[]>> partitions = new HashMap<>();
-        //Set<Object> uniqueValues = new HashSet<>();
 
         for (Object[] example : examples) {
-            Object attributeValue = example[efficientAttributeIndex];
-            //uniqueValues.add(attributeValue);
-            /* Creates a map where key is attributeValue and value contains all examples with the given attributeValue */
-            partitions.computeIfAbsent(attributeValue, (k -> new ArrayList<>())).add(example);
+            String key = example[efficientAttributeIndex].toString();
+            /* Creates a map where key is attributeIndex and value contains all examples with the given attributeIndex */
+            partitions.computeIfAbsent(key, (k -> new ArrayList<>())).add(example);
         }
-
-        // Check for homogeneous attribute values
-        /*
-        if (uniqueValues.size() == 1) {
-            // All attribute values are the same, return a single partition
-            return Collections.singletonMap(uniqueValues.iterator().next(), new ArrayList<>(examples));
-        }
-         */
 
         return partitions;
-    }
-
-    /**
-     * Checks if the input Collection has invalid attribute types.
-     *
-     * @param examples The examples to check.
-     * @implNote This operation is parallelized.
-     * @return true if the input is valid, false otherwise.
-     *
-     */
-    private static boolean validateInput(Collection<Object[]> examples) {
-        return examples.parallelStream().anyMatch(o -> Arrays.stream(o).anyMatch(ID3Utils::testAttribute));
-    }
-
-    /**
-     * Tests if the attribute is numeric.
-     *
-     * @param attribute The attribute to test.
-     * @return true if the attribute is a number, false otherwise.
-     */
-    private static boolean testAttribute(Object attribute) {
-        return attribute instanceof Number;
     }
 
     /**
@@ -167,11 +139,8 @@ public class ID3Utils {
         int attributeIndex = 0;
 
         try {
-            if (calcInformationGain(examples, labelIndex) != null) {
-                attributeIndex = calcInformationGain(examples, labelIndex)
-                        /* Find the index of the maximum information gain */
-                        .indexOf(Collections.max(calcInformationGain(examples, labelIndex)));
-            }
+            List<Double> informationGains = calcInformationGain(examples, labelIndex);
+            attributeIndex = informationGains.indexOf(Collections.max(informationGains));
         } catch (NullPointerException npe) {
             System.out.println("Error in selectEfficientAttribute: " + npe.getMessage());
         }
@@ -205,7 +174,19 @@ public class ID3Utils {
      * @return the classification accuracy.
      */
     public static double getClassificationAccuracy(DecisionTree decisionTree, Collection<Object[]> validationExamples, int labelIndex) {
-        //tmp
-        return 0;
+        int correctPredictions = 0;
+
+        /* Predict the class of each example and compare it to the actual class */
+        for (Object[] example : validationExamples) {
+            String actualLabel = example[labelIndex].toString();
+            String predictedLabel = decisionTree.predict(example);
+
+            if (actualLabel.equals(predictedLabel)) {
+                correctPredictions++;
+            }
+        }
+
+        /* Return the classification accuracy as ratio of correct predictions to total predictions */
+        return (double) correctPredictions / validationExamples.size();
     }
 }
