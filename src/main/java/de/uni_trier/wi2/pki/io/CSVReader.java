@@ -24,7 +24,6 @@ public class CSVReader {
 
     // TODO: seperate na filter from reader
     public static List<String[]> readCsvToArray(String relativePath, String delimiter, boolean ignoreHeader) throws IOException {
-
         File inputFile = new File(relativePath);
         String line = null;
         List<String[]> parsedLines = new ArrayList<>() {};
@@ -47,6 +46,29 @@ public class CSVReader {
         }
 
         return parsedLines;
+    }
+
+    /**
+     * Read the header of a CSV file and return it as a string array.
+     *
+     * @param relativePath the path where the CSV file is located (has to be relative path!)
+     * @param delimiter    the delimiter symbol which is used in the CSV
+     * @return A string array that contains the header of the CSV file
+     * @throws IOException if something goes wrong. Exception should be handled at the calling function.
+     */
+    public static String[] readCsvHeader(String relativePath, String delimiter) throws IOException {
+        File inputFile = new File(relativePath);
+        String line = null;
+        String[] header = null;
+
+        // read first header line by line and split each line at the character denoted by delimiter
+        try (BufferedReader data = new BufferedReader(new FileReader(inputFile))) {
+            line = data.readLine();
+            header = line.split(delimiter);
+        } catch (FileNotFoundException fne) {
+            fne.getStackTrace();
+        }
+        return header;
     }
 
     /**

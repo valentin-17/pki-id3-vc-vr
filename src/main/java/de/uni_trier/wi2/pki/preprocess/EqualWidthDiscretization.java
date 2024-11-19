@@ -33,7 +33,7 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
             double upperBound = min + (binWidth * i);
 
             for (Object[] example : sortedExamples){
-                double temp_number = ((Number) example[attributeId]).doubleValue();
+                double temp_number = Double.parseDouble(example[attributeId].toString());
                 if (temp_number == min){
                     example[attributeId] = 1;
                     outputList.add(example);
@@ -50,12 +50,12 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
 
     //Minimum
     private static double getMin(List<Object[]> sortedExamples, int attributeId) {
-        return ((Number) sortedExamples.get(0)[attributeId]).doubleValue();
+        return Double.parseDouble((String) sortedExamples.get(0)[attributeId]);
     }
 
     //Maximum
     private static double getMax(List<Object[]> examples, int attributeId) {
-        return ((Number) examples.get(examples.size() - 1)[attributeId]).doubleValue();
+        return Double.parseDouble((String) examples.get(examples.size() - 1)[attributeId]);
     }
 
     //calculate the bin width
@@ -68,9 +68,8 @@ public class EqualWidthDiscretization extends BinningDiscretizer {
 
     //sort list via attribute
     private static List<Object[]> sortExamplesViaAtribute(List<Object[]> examples, int attributeId) {
-        List<Object[]> sortedExamples = examples.stream()
+        return examples.stream()
                 .sorted(Comparator.comparing(o -> Double.parseDouble(o[attributeId].toString())))
                 .toList();
-        return sortedExamples;
     }
 }

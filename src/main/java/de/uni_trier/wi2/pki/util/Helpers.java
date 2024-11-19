@@ -1,9 +1,7 @@
 package de.uni_trier.wi2.pki.util;
 
 import javax.print.attribute.standard.MediaSize;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Collection of various helpers and debugging Methods.
@@ -33,5 +31,35 @@ public class Helpers {
                         .map(s -> (Object) s)
                         .toArray())
                 .toList();
+    }
+
+    /**
+     * Prints a map with list values to the console.
+     *
+     * @param map the map to print
+     * @return the string representation of the map
+     */
+    public static String printListLikeMapEntries (Map<Object, List<Object[]>> map) {
+        StringBuilder out = new StringBuilder();
+
+        for (Map.Entry<Object, List<Object[]>> entry : map.entrySet()) {
+            out.append("Key: ").append(entry.getKey()).append("\n");
+            out.append("Values: \n");
+            for (Object[] value : entry.getValue()) {
+                out.append(Arrays.toString(value)).append("\n");
+            }
+        }
+
+        return out.toString();
+    }
+
+    public static String printCollectionOfObjectArrays (Collection<Object[]> collection) {
+        StringBuilder out = new StringBuilder();
+
+        for (Object[] value : collection) {
+            out.append(Arrays.toString(value)).append("\n");
+        }
+
+        return out.toString();
     }
 }

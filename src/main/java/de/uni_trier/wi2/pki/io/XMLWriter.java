@@ -1,5 +1,6 @@
 package de.uni_trier.wi2.pki.io;
 
+import de.uni_trier.wi2.pki.Main;
 import de.uni_trier.wi2.pki.tree.DecisionTree;
 import de.uni_trier.wi2.pki.tree.DecisionTreeLeafNode;
 import de.uni_trier.wi2.pki.tree.DecisionTreeNode;
@@ -37,7 +38,9 @@ public class XMLWriter {
      * @throws IOException if something goes wrong.
      */
     public static void writeXML(String path, DecisionTree decisionTree) throws IOException {
-
+        try (OutputStream outputStream = Files.newOutputStream(Path.of(path))) {
+            writeXML(outputStream, decisionTree);
+        }
     }
 
     /**
@@ -47,7 +50,19 @@ public class XMLWriter {
      * @param decisionTree the tree to serialize.
      */
     public static void writeXML(OutputStream outputStream, DecisionTree decisionTree) {
+        Document doc = new Document();
+        Element rootElement = new Element(N_DECISION_TREE);
+        doc.setRootElement(rootElement);
 
+        addNode(decisionTree, rootElement);
+
+        XMLOutputter xmlOutputter = new XMLOutputter();
+        xmlOutputter.setFormat(Format.getPrettyFormat());
+        try {
+            xmlOutputter.output(doc, outputStream);
+        } catch (IOException ioe) {
+            System.out.println(ioe.getMessage());
+        }
     }
 
     /**
@@ -57,7 +72,22 @@ public class XMLWriter {
      * @param xmlParentElem the parent element in the XML to append to.
      */
     private static void addNode(DecisionTreeNode decTreeNode, Element xmlParentElem) {
-        int zahl = 0;
+        if (decTreeNode instanceof DecisionTreeLeafNode) {
+            Element leafElem = new Element(N_LEAF_NODE);
+            leafElem.setAttribute(A_CLASS, ((DecisionTreeLeafNode) decTreeNode).getLabelClass());
+            xmlParentElem.addContent(leafElem);
+        } else {
+            Element nodeElem = new Element(N_NODE);
+            nodeElem.setAttribute(A_ATTRIBUTE, String.valueOf(Main.HEADER[decTreeNode.getAttributeIndex()]));
+            xmlParentElem.addContent(nodeElem);
+
+            for (Map.Entry<String, DecisionTreeNode> entry : decTreeNode.getSplits().entrySet()) {
+                Element ifElem = new Element(N_IF);
+                ifElem.setAttribute(A_VALUE, entry.getKey());
+                nodeElem.addContent(ifElem);
+                addNode(entry.getValue(), ifElem);
+            }
+        }
     }
 
 }

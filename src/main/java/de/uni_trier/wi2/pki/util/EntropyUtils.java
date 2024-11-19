@@ -34,10 +34,9 @@ public class EntropyUtils {
                 double gain = calcInformationGainForAttribute(attributeIndex, matrix, labelIndex);
                 informationGains.add(gain);
             } else {
-                informationGains.add(0.0);  // or add a null, depending on your requirements
+                informationGains.add(-1.0);  // or add a null, depending on your requirements
             }
         }
-        informationGains.remove(labelIndex);
 
         return informationGains;
     }

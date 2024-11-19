@@ -43,5 +43,4 @@ public class DecisionTreeLeafNode extends DecisionTreeNode {
     public String getLabelClass() {
         return labelClass;
     }
-
 }

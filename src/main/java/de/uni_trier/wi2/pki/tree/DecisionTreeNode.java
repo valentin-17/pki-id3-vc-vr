@@ -2,6 +2,7 @@ package de.uni_trier.wi2.pki.tree;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -24,7 +25,6 @@ public class DecisionTreeNode {
         splits = new HashMap<>();
     }
 
-    // TODO: Nicht im Baum zwischenspeichern
     private Collection<Object[]> elements;
 
     /**
@@ -48,7 +48,6 @@ public class DecisionTreeNode {
      * @param Object     CSV attribute for which a split is made.
      * @param decisionTreeNode Child decision tree node.
      */
-
     public void addSplit(String Object, DecisionTreeNode decisionTreeNode) {
         splits.put(Object, decisionTreeNode);
     }
@@ -109,5 +108,4 @@ public class DecisionTreeNode {
     public boolean isLeafNode() {
         return false;
     }
-
 }
