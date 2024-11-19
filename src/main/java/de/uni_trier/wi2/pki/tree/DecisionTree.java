@@ -1,9 +1,6 @@
 package de.uni_trier.wi2.pki.tree;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DecisionTree extends DecisionTreeNode {
 
@@ -24,19 +21,31 @@ public class DecisionTree extends DecisionTreeNode {
      * @return the predicted class as a string
      */
     public String predict(Object[] example) {
+        if (example == null) {
+            throw new IllegalArgumentException("Example cannot be null");
+        }
+
         DecisionTreeNode currentNode = this;
 
+        System.out.println("Example: " + Arrays.toString(example));
+
         /* Traverse the tree until a leaf node is reached */
-        while (currentNode instanceof DecisionTree treeNode) {
-            String attributeValue = (String) example[treeNode.getAttributeIndex()];
-            currentNode = treeNode.getSplits().get(attributeValue);
+        while (currentNode != null && !currentNode.isLeafNode()) {
+            int attributeIndex = currentNode.getAttributeIndex();
+            if (attributeIndex < 0 || attributeIndex >= example.length) {
+                throw new IllegalArgumentException("Invalid attribute index: " + attributeIndex);
+            }
+
+            String attributeValue = (String) example[attributeIndex];
+            currentNode = currentNode.getSplits().get(attributeValue);
         }
 
         /* Return the class of the leaf node if a leaf node is found */
-        if (currentNode instanceof DecisionTreeLeafNode) {
+        if (currentNode != null && currentNode.isLeafNode()) {
             return ((DecisionTreeLeafNode) currentNode).getLabelClass();
         }
-        throw new IllegalStateException("Prediction failed: no leaf node found.");
+
+        throw new IllegalStateException("Prediction failed: no leaf node found");
     }
 
     /**

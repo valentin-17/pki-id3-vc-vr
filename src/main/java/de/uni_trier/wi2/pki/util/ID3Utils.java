@@ -54,12 +54,6 @@ public class ID3Utils {
             currentNode = new DecisionTreeNode(parent, examplesList, efficientAttributeIndex);
         }
 
-        // DEBUG
-        StringBuilder depth = new StringBuilder();
-        depth.append("-".repeat(Math.max(0, currentDepth)));
-        System.out.println(depth + "Current Depth: " + currentDepth);
-        System.out.println(depth + "Efficient Attribute Index: " + efficientAttributeIndex);
-
         /* If the examples are empty, return a leaf node with the dominant class of the parent node */
         if (examplesList.isEmpty()) {
             return new DecisionTreeLeafNode(parent, examplesList, getDominantClass(parent.getElements(), labelIndex));
@@ -77,20 +71,16 @@ public class ID3Utils {
 
         /* Otherwise, recursively create a new decision tree node */
         partitions = partitionExamples(examplesList, efficientAttributeIndex);
-        System.out.println(depth + "* of Partitions: " + partitions.size());
 
         /* If there are multiple partitions, create a new split for each partition */
         if (partitions.size() > 1) {
             for (Map.Entry<Object, List<Object[]>> entry : partitions.entrySet()) {
-                System.out.println(depth + "* of Partitions: " + partitions.size());
-                System.out.println(depth + "Adding Split for Key: " + entry.getKey());
                 String attribute = entry.getKey().toString();
                 DecisionTreeNode node = createTree(entry.getValue(), labelIndex, maximumDepth, currentDepth + 1, currentNode);
                 currentNode.addSplit(attribute, node);
             }
         /* If there is only one partition, return a leaf node with the most common label */
         } else if (partitions.size() == 1) {
-            System.out.println(depth + "Only one Partition found. Returning Leaf Node with Dominant Class.");
             return new DecisionTreeLeafNode(currentNode, examplesList, getDominantClass(examplesList, labelIndex));
         }
 
@@ -136,16 +126,10 @@ public class ID3Utils {
      * @return the index of the attribute to select next.
      */
     public static int selectEfficientAttribute(Collection<Object[]> examples, int labelIndex) {
-        int attributeIndex = 0;
+        List<Double> infGain = calcInformationGain(examples, labelIndex);
+        double max = Collections.max(infGain);
 
-        try {
-            List<Double> informationGains = calcInformationGain(examples, labelIndex);
-            attributeIndex = informationGains.indexOf(Collections.max(informationGains));
-        } catch (NullPointerException npe) {
-            System.out.println("Error in selectEfficientAttribute: " + npe.getMessage());
-        }
-
-        return attributeIndex;
+        return infGain.indexOf(max);
     }
 
     /**

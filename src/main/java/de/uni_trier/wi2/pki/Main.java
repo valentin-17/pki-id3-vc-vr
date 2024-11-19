@@ -9,6 +9,7 @@ import de.uni_trier.wi2.pki.preprocess.KMeansDiscretizer;
 import de.uni_trier.wi2.pki.tree.DecisionTree;
 import de.uni_trier.wi2.pki.util.ID3Utils;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,30 +64,40 @@ public class Main {
         attrIsContinuous.add(10, false);
         // Train model, evaluate model, write XML, ...
 
+        List<String[]> parsedLinesSmall = parsedLines.subList(0, 10);
+
         List<Object[]> KMeansDiscretizedData = convertToObjectList(parsedLines);
         List<Object[]> EFDDiscretizedData = convertToObjectList(parsedLines);
+        List<Object[]> EWDDiscretizedData = convertToObjectList(parsedLinesSmall);
 
         KMeansDiscretizedData = kmd.discretize(BINS, KMeansDiscretizedData, 0);
-        KMeansDiscretizedData = kmd.discretize(10, KMeansDiscretizedData, 3);
+        KMeansDiscretizedData = kmd.discretize(BINS, KMeansDiscretizedData, 3);
+        KMeansDiscretizedData = kmd.discretize(BINS, KMeansDiscretizedData, 4);
         KMeansDiscretizedData = kmd.discretize(BINS, KMeansDiscretizedData, 5);
         KMeansDiscretizedData = kmd.discretize(BINS, KMeansDiscretizedData, 9);
 
         EFDDiscretizedData = efd.discretize(BINS, EFDDiscretizedData, 0);
-        EFDDiscretizedData = efd.discretize(10, EFDDiscretizedData, 3);
-        EFDDiscretizedData = efd.discretize(4, EFDDiscretizedData, 5);
+        EFDDiscretizedData = efd.discretize(BINS, EFDDiscretizedData, 3);
+        EFDDiscretizedData = efd.discretize(BINS, EFDDiscretizedData, 5);
         EFDDiscretizedData = efd.discretize(BINS, EFDDiscretizedData, 9);
 
-        List<Object[]> KMeansDiscretizedDataSmall = KMeansDiscretizedData.subList(0, 50);
+        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 0);
+        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 3);
+        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 4);
+        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 5);
+        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 9);
+
+        List<Object[]> KMeansDiscretizedDataSmall = KMeansDiscretizedData.subList(0, 100);
         List<Object[]> EFDDiscretizedDataSmall = EFDDiscretizedData.subList(0, 50);
 
-        DecisionTree dt = ID3Utils.createTree(KMeansDiscretizedData, LABEL_ATTR_INDEX);
+        DecisionTree dt = ID3Utils.createTree(EFDDiscretizedDataSmall, LABEL_ATTR_INDEX);
+        //DecisionTree bestModel = CrossValidator.performCrossValidation(EFDDiscretizedDataSmall, LABEL_ATTR_INDEX, ID3Utils::createTree, 5);
 
         try {
             XMLWriter.writeXML("target/classes/decision_tree.xml", dt);
+            // XMLWriter.writeXML("target/classes/best_model.xml", bestModel);
         } catch (IOException ioe) {
             System.out.println(ioe.getMessage());
         }
-
-        DecisionTree bestModel = CrossValidator.performCrossValidation(KMeansDiscretizedData, LABEL_ATTR_INDEX, ID3Utils::createTree, 5);
     }
 }

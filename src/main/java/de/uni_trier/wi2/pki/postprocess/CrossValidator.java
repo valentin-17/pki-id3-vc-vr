@@ -1,8 +1,10 @@
 package de.uni_trier.wi2.pki.postprocess;
 
+import de.uni_trier.wi2.pki.io.XMLWriter;
 import de.uni_trier.wi2.pki.tree.DecisionTree;
 import de.uni_trier.wi2.pki.util.ID3Utils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +49,15 @@ public class CrossValidator {
             /* Train the model and evaluate it */
             DecisionTree model = trainFunction.apply(trainingSet, labelAttribute);
             double accuracy = evaluateModel(model, validationSet, labelAttribute);
+
+            /* Save each model to a file */
+            String path = "target/classes/decision_tree_" + i + ".xml";
+
+            try {
+                XMLWriter.writeXML(path, model);
+            } catch (IOException ioe) {
+                System.out.println(ioe.getMessage());
+            }
 
             if (accuracy > bestAccuracy) {
                 bestAccuracy = accuracy;
