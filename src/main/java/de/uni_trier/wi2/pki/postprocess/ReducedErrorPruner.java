@@ -14,6 +14,10 @@ import java.util.List;
  */
 public class ReducedErrorPruner {
 
+    /*if error (parent) < error (child){then prune the child node}
+    else dont prune the child node
+     */
+
     /**
      * The starting classification accuracy.
      */
@@ -33,7 +37,6 @@ public class ReducedErrorPruner {
      */
     public void prune(DecisionTree trainedDecisionTree, Collection<Object[]> validationExamples, int labelAttributeId) {
 
-
         pruneTree(trainedDecisionTree, validationExamples, labelAttributeId);
     }
 
@@ -45,6 +48,24 @@ public class ReducedErrorPruner {
      * @param labelAttributeIndex     the label attribute index
      */
     private void pruneTree(DecisionTreeNode currentDecisionTreeNode, Collection<Object[]> validationExamples, int labelAttributeIndex) {
+        List<Object[]> validationExamplesList = new ArrayList<>(validationExamples);
+
+        if (currentDecisionTreeNode.isLeafNode()) {
+            return;
+        }
+
+        for (DecisionTreeNode child : currentDecisionTreeNode.getSplits().values()) {
+            pruneTree(child, validationExamples, labelAttributeIndex);
+        }
+
+        classificationAccuracy = CrossValidator.evaluateModel(decisionTree, validationExamplesList, labelAttributeIndex);
+
+        DecisionTreeLeafNode leafNode = new DecisionTreeLeafNode(currentDecisionTreeNode, currentDecisionTreeNode.getElements(), ID3Utils.getDominantClass(currentDecisionTreeNode.getElements(), labelAttributeIndex));
+        double classificationAccuracyAfterPruning = CrossValidator.evaluateModel(decisionTree, validationExamplesList, labelAttributeIndex);
+
+        if (classificationAccuracyAfterPruning > classificationAccuracy) {
+            currentDecisionTreeNode.getParent().addSplit(null, leafNode);
+        }
     }
 
 }

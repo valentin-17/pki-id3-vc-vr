@@ -1,29 +1,13 @@
 package de.uni_trier.wi2.pki.tree;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Class for representing a node in the decision tree.
  */
 public class DecisionTreeNode {
 
-    /**
-     * Constructor for decision tree node.
-     *
-     * @param parent         Parent node of current node.
-     * @param elements       Elements for current node.
-     * @param attributeIndex Index for current attribute.
-     */
 
-    public DecisionTreeNode(DecisionTreeNode parent, Collection<Object[]> elements, int attributeIndex) {
-        this.parent = parent;
-        this.attributeIndex = attributeIndex;
-        this.elements = elements;
-        splits = new HashMap<>();
-    }
 
     private Collection<Object[]> elements;
 
@@ -41,6 +25,31 @@ public class DecisionTreeNode {
      * The checked split condition values and the nodes for these conditions.
      */
     HashMap<String, DecisionTreeNode> splits;
+
+    /**
+     * Constructor for decision tree node.
+     *
+     * @param parent         Parent node of current node.
+     * @param elements       Elements for current node.
+     * @param attributeIndex Index for current attribute.
+     */
+
+    public DecisionTreeNode(DecisionTreeNode parent, Collection<Object[]> elements, int attributeIndex) {
+        this.parent = parent;
+        this.attributeIndex = attributeIndex;
+        this.elements = elements;
+        splits = new HashMap<>();
+
+        /// Anker start
+        System.out.println();
+        System.out.println("*** In DecisionTreeNode constructor ***");
+        System.out.println("Attribute Index: " + attributeIndex);
+        System.out.println("elements:");
+        for (Object[] element : elements) {
+            System.out.println(Arrays.toString(element));
+        }
+        /// Anker end
+    }
 
     /**
      * Adds a split to the current node.

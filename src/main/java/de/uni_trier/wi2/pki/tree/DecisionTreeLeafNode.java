@@ -1,5 +1,6 @@
 package de.uni_trier.wi2.pki.tree;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -23,6 +24,15 @@ public class DecisionTreeLeafNode extends DecisionTreeNode {
     public DecisionTreeLeafNode(DecisionTreeNode parent, Collection<Object[]> elements, String labelClass) {
         super(parent, elements, -1);
         this.labelClass = labelClass;
+
+        /// Anker start
+        System.out.println();
+        System.out.println("*** In DecisionTreeLeafNode constructor ***");
+        System.out.println("Leaf Node (label Class): " + labelClass);
+        for (Object[] element : elements) {
+            System.out.println(Arrays.toString(element));
+        }
+        /// Anker end
     }
 
     @Override
