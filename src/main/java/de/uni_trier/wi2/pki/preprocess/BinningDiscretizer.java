@@ -20,4 +20,5 @@ public abstract class BinningDiscretizer {
      */
     public abstract List<Object[]> discretize(int numberOfBins, List<Object[]> examples, int attributeId);
 
+
 }
