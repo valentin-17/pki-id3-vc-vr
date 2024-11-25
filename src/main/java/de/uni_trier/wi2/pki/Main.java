@@ -27,8 +27,9 @@ public class Main {
 
     public static void main(String[] args) {
 
+        // some constants
         final String FILE_NAME = "churn_data.csv";
-        final int LABEL_ATTR_INDEX = 10;
+        final int LABEL_ATTR_INDEX = 0;
         final String delim = ";";
         final int NUMBER_OF_FOLDS = 5;
 
@@ -63,64 +64,6 @@ public class Main {
         attrIsContinuous.add(9, true);
         attrIsContinuous.add(10, false);
 
-
-        int size_of_data = parsedLines.size();
-
-        //20% der Daten für Testdaten
-        int test_data_size = (int) (size_of_data * 0.2);
-
-        //zufällige Auswahl von Testdaten
-        Collection<Object[]> test_data = new ArrayList<>();
-        for (int i = 0; i < test_data_size; i++) {
-            int randomIndex = (int) (Math.random() * size_of_data);
-            test_data.add(parsedLines.get(randomIndex));
-            parsedLines.remove(randomIndex);
-            size_of_data--;
-        }
-
-        List<String[]>valli_test = new ArrayList<>();
-        valli_test.add(new String[]{"klein" , "blond", "blau", "+"});
-        valli_test.add(new String[]{"gross", "rot", "blau", "+"});
-        valli_test.add(new String[]{"gross" , "blond", "blau", "+"});
-        valli_test.add(new String[]{"gross" , "blond", "braun", "-"});
-        valli_test.add(new String[]{"klein" , "dunkel", "blau", "-"});
-        valli_test.add(new String[]{"gross" , "dunkel", "blau", "-"});
-        valli_test.add(new String[]{"gross" , "dunkel", "braun", "-"});
-        valli_test.add(new String[]{"klein" , "blond", "braun", "-"});
-
-        Collection<Object[]>test_data1 = new ArrayList<>();
-        test_data1.add(new String[]{"klein" , "blond", "blau", "+"});
-        test_data1.add(new String[]{"gross", "rot", "blau", "+"});
-        test_data1.add(new String[]{"gross" , "blond", "blau", "+"});
-        test_data1.add(new String[]{"gross" , "blond", "braun", "-"});
-        test_data1.add(new String[]{"klein" , "dunkel", "blau", "-"});
-        test_data1.add(new String[]{"gross" , "dunkel", "blau", "-"});
-        test_data1.add(new String[]{"gross" , "dunkel", "braun", "-"});
-        test_data1.add(new String[]{"klein" , "blond", "braun", "-"});
-
-
-
-        List<String[]> parsedLinesSmall = parsedLines.subList(0, 50);
-        Collection<Object[]> test_da = new ArrayList<>();
-        test_da.add(parsedLines.get(100));
-        test_da.add(parsedLines.get(101));
-        test_da.add(parsedLines.get(102));
-        test_da.add(parsedLines.get(103));
-        test_da.add(parsedLines.get(104));
-        test_da.add(parsedLines.get(105));
-
-
-
-
-
-        System.out.println("parsedLinesSmall: ");
-        System.out.println();
-        for (String[] line : parsedLinesSmall) {
-            System.out.println(Arrays.toString(line));
-        }
-        System.out.println("-------------------------------------------------");
-
-
         /// KMeans
         List<Object[]> KMeansDiscretizedData = convertToObjectList(parsedLinesSmall);
 
@@ -129,77 +72,43 @@ public class Main {
 
         /// EFD
         List<Object[]> EFDDiscretizedData = convertToObjectList(parsedLinesSmall);
+        // Train model, evaluate model, write XML, ...
 
+        List<String[]> parsedLinesSmall = parsedLines.subList(0, 10);
 
+        List<Object[]> KMeansDiscretizedData = convertToObjectList(parsedLines);
+        List<Object[]> EFDDiscretizedData = convertToObjectList(parsedLines);
+        List<Object[]> EWDDiscretizedData = convertToObjectList(parsedLinesSmall);
 
-        /*
-        /// KMeans Discretization
         KMeansDiscretizedData = kmd.discretize(BINS, KMeansDiscretizedData, 0);
         KMeansDiscretizedData = kmd.discretize(BINS, KMeansDiscretizedData, 3);
+        KMeansDiscretizedData = kmd.discretize(BINS, KMeansDiscretizedData, 4);
         KMeansDiscretizedData = kmd.discretize(BINS, KMeansDiscretizedData, 5);
         KMeansDiscretizedData = kmd.discretize(BINS, KMeansDiscretizedData, 9);
-         */
 
-
-        /// EWD Discretization
-        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 0);
-        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 3);
-        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 5);
-        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 9);
-
-
-        /*
-        /// EFD Discretization
         EFDDiscretizedData = efd.discretize(BINS, EFDDiscretizedData, 0);
         EFDDiscretizedData = efd.discretize(BINS, EFDDiscretizedData, 3);
         EFDDiscretizedData = efd.discretize(BINS, EFDDiscretizedData, 5);
         EFDDiscretizedData = efd.discretize(BINS, EFDDiscretizedData, 9);
-         */
 
-
-        /// KMEans Print
-        System.out.println("EWDDiscretizedData: ");
-        System.out.println();
-
-        for (Object[] line : EWDDiscretizedData) {
-            System.out.println(Arrays.toString(line));
-        }
-        System.out.println("-------------------------------------------------");
-
-
-
-        /// Baum machen mit KMeansDiscretizedData
-        //DecisionTree dt = ID3Utils.createTree(KMeansDiscretizedData, LABEL_ATTR_INDEX);
-
-        /// Baum machen mit EWDDiscretizedData
-        DecisionTree dt = ID3Utils.createTree(EWDDiscretizedData, LABEL_ATTR_INDEX, 20);
-
-        /// Baum machen mit EFDDiscretizedData
-        //DecisionTree dt = ID3Utils.createTree(EFDDiscretizedData, LABEL_ATTR_INDEX);
-
-
-
-        System.out.println();
-        System.out.println("-------------------- Baum testen (vor Pruning) --------------------");
-        System.out.println();
-
-        try {
-            XMLWriter.writeXML("target/classes/decision_tree_BP.xml", dt);
-            // XMLWriter.writeXML("target/classes/best_model.xml", bestModel);
-        } catch (IOException ioe) {
-            System.out.println(ioe.getMessage());
-        }
 
         DecisionTree bestModel_BP = CrossValidator.performCrossValidation(KMeansDiscretizedData, LABEL_ATTR_INDEX, ID3Utils::createTree, NUMBER_OF_FOLDS);
-        System.out.println(" nach CrossValidation: 1");
 
 
-        /// Baum prunen
-        ReducedErrorPruner pruner = new ReducedErrorPruner();
-        pruner.prune(dt, test_data, LABEL_ATTR_INDEX);
+        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 0);
+        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 3);
+        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 4);
+        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 5);
+        EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 9);
+
+        List<Object[]> KMeansDiscretizedDataSmall = KMeansDiscretizedData.subList(0, 100);
+        List<Object[]> EFDDiscretizedDataSmall = EFDDiscretizedData.subList(0, 50);
+
+        DecisionTree dt = ID3Utils.createTree(EFDDiscretizedDataSmall, LABEL_ATTR_INDEX);
+        //DecisionTree bestModel = CrossValidator.performCrossValidation(EFDDiscretizedDataSmall, LABEL_ATTR_INDEX, ID3Utils::createTree, 5);
 
         try {
-            XMLWriter.writeXML("target/classes/decision_tree_AP.xml", dt);
+            XMLWriter.writeXML("target/classes/decision_tree.xml", dt);
             // XMLWriter.writeXML("target/classes/best_model.xml", bestModel);
         } catch (IOException ioe) {
             System.out.println(ioe.getMessage());
@@ -207,14 +116,5 @@ public class Main {
 
         DecisionTree bestModel_AP = CrossValidator.performCrossValidation(KMeansDiscretizedData, LABEL_ATTR_INDEX, ID3Utils::createTree, NUMBER_OF_FOLDS);
         System.out.println("nach CrossValidation: 2");
-
-
-        /*
-        /// Baum testen (nach Pruning)
-        double prunedAccuracy = CrossValidator.evaluateModel(dt, new ArrayList<>(test_data), LABEL_ATTR_INDEX);
-        System.out.println("Genauigkeit nach Pruning: " + prunedAccuracy);
-         */
-
     }
-
 }
