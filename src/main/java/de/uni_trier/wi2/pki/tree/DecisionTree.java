@@ -27,8 +27,6 @@ public class DecisionTree extends DecisionTreeNode {
 
         DecisionTreeNode currentNode = this;
 
-        System.out.println("Example: " + Arrays.toString(example));
-
         /* Traverse the tree until a leaf node is reached */
         while (currentNode != null && !currentNode.isLeafNode()) {
             int attributeIndex = currentNode.getAttributeIndex();
@@ -36,8 +34,9 @@ public class DecisionTree extends DecisionTreeNode {
                 throw new IllegalArgumentException("Invalid attribute index: " + attributeIndex);
             }
 
-            String attributeValue = (String) example[attributeIndex];
+            String attributeValue = example[attributeIndex].toString();
             currentNode = currentNode.getSplits().get(attributeValue);
+
         }
 
         /* Return the class of the leaf node if a leaf node is found */
@@ -45,7 +44,11 @@ public class DecisionTree extends DecisionTreeNode {
             return ((DecisionTreeLeafNode) currentNode).getLabelClass();
         }
 
-        throw new IllegalStateException("Prediction failed: no leaf node found");
+        /*
+         * If no node is found up to this point then the prediction is not possible because there is no path for the given example
+         * thus the prediction is wrong and returns a wrong label which is then used to calculate the accuracy
+         */
+        return "No prediction possible";
     }
 
     /**

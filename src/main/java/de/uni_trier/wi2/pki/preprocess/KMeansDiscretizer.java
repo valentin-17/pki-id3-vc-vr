@@ -1,9 +1,9 @@
 package de.uni_trier.wi2.pki.preprocess;
 
 import de.uni_trier.wi2.pki.Main;
+import de.uni_trier.wi2.pki.settings.ID3Settings;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
@@ -11,6 +11,8 @@ import java.util.stream.IntStream;
  * Class that holds logic for discretizing values using K-means clustering.
  */
 public class KMeansDiscretizer extends BinningDiscretizer {
+
+    ID3Settings id3Settings = new ID3Settings();
 
     /**
      * Discretizes a collection of examples according to the number of bins (clusters) and the respective attribute ID.
@@ -25,7 +27,7 @@ public class KMeansDiscretizer extends BinningDiscretizer {
         ArrayList<Object[]> examplesList = new ArrayList<>(examples);
         double quality_new = Double.MAX_VALUE;
         double quality_old = 0;
-        double epsilon = 0.05;
+        double epsilon = id3Settings.getEpsilon();
         double[] values = null;
         double[] centroids = null;
         int[] clusters = new int[examplesList.size()];
@@ -59,15 +61,17 @@ public class KMeansDiscretizer extends BinningDiscretizer {
             /* Update the quality measure */
             quality_old = quality_new;
             quality_new = calculateQuality(values, centroids, clusters);
+            System.out.println("NEW Quality: " + quality_new);
         }
 
         binNames = createBinNames(numberOfBins, values, clusters, attributeId);
 
         /* Print the final bins */
-        System.out.println("Final bins with their bounds:");
+        System.out.printf("Final bins for attribute %s with bounds:\n", Main.HEADER[attributeId]);
         for (String binName : binNames) {
-            System.out.println(binName);
+            System.out.printf("- %s\n", binName);
         }
+        System.out.println();
 
         /* Assign bin names to examples */
         return examplesList.stream().peek(e -> {
@@ -131,10 +135,12 @@ public class KMeansDiscretizer extends BinningDiscretizer {
         ArrayList<Double> tmpValues = new ArrayList<>(DoubleStream.of(values).boxed().toList());
         double[] centroids = new double[numberOfBins];
 
-        Collections.shuffle(tmpValues);                                                                                 /* shuffling the values ensures random selection of centroids */
+        /* shuffling the values ensures random selection of centroids */
+        Collections.shuffle(tmpValues);
 
-        for (int i = 0; i < numberOfBins; i++) {                                                                        /* pick the first n (numberOfBins) values as initial centroids */
-            centroids[i] = tmpValues.get(i);                                                                            /* because of random shuffling we can simply use the first n values */
+        /* pick the first n (numberOfBins) values as initial centroids because of random shuffling we can simply use the first n values */
+        for (int i = 0; i < numberOfBins; i++) {
+            centroids[i] = tmpValues.get(i);
         }
         
         return centroids;
@@ -149,7 +155,6 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      */
     private int findNearestCentroid(double value, double[] centroids) {
         int index = 0;
-        // TODO: review if Double.MAX_VALUE is a good choice for the initial value
         double minDistance = Double.MAX_VALUE;
 
         /* Loop through all centroids and find the one with the smallest absolute distance to the value */
@@ -179,10 +184,13 @@ public class KMeansDiscretizer extends BinningDiscretizer {
         /* Loop through all clusters and calculate the new centroid as the mean of all values in the cluster */
         for (int i = 0; i < numberOfBins; i++) {
             int clusterIndex = i;
-            int clusterSize = (int) Arrays.stream(clusters).filter(c -> c == clusterIndex).count();                     /* count the examples assigned to clusterIndex */
-            double clusterSum = calculateClusterSum(values, clusters, i);                                               /* calculate the sum of all values assigned to clusterIndex */
+            /* count the examples assigned to clusterIndex */
+            int clusterSize = (int) Arrays.stream(clusters).filter(c -> c == clusterIndex).count();
+            /* calculate the sum of all values assigned to clusterIndex */
+            double clusterSum = calculateClusterSum(values, clusters, i);
 
-            centroids[i] = (double) 1 / clusterSize * clusterSum;                                                       /* apply the formula for new centroids */
+            /* apply the formula for new centroids */
+            centroids[i] = (double) 1 / clusterSize * clusterSum;
         }
 
         return centroids;
@@ -215,9 +223,12 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      * @return The sum of all values assigned to the given cluster.
      */
     private double calculateClusterSum(double[] values, int[] clusters, int clusterIndex) {
-        return IntStream.range(0, values.length)                                                                        /* create a int range for all values */
-                .filter(c -> clusters[c] == clusterIndex)                                                               /* filter for examples assigned to clusterIndex */
-                .mapToDouble(v -> values[v])                                                                            /* extract and sum the values from value array */
+        /* create a int range for all values */
+        return IntStream.range(0, values.length)
+                /* filter for examples assigned to clusterIndex */
+                .filter(c -> clusters[c] == clusterIndex)
+                /* extract and sum the values from value array */
+                .mapToDouble(v -> values[v])
                 .sum();
     }
 
@@ -231,10 +242,15 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      * @return The sum of all squared distances of values assigned to the given cluster to the centroid of that cluster.
      */
     private double calculateDistanceSumToCentroid (double[] values, double[] centroids, int[] clusters, int clusterIndex) {
-        return IntStream.range(0, values.length)                                                                        /* create a int range for all values */
-                .filter(c -> clusters[c] == clusterIndex)                                                               /* filter for examples assigned to clusterIndex */
-                .mapToDouble(v -> Math.abs(values[v] - centroids[clusterIndex]))                                        /* calculate the distance of each value to the centroid */
-                .map(d -> Math.pow(d, 2))                                                                               /* square the distance */
-                .sum();                                                                                                 /* sum up all distances */
+
+        /* create a int range for all values */
+        return IntStream.range(0, values.length)
+                /* filter for examples assigned to clusterIndex */
+                .filter(c -> clusters[c] == clusterIndex)
+                /* calculate the distance of each value to the centroid */
+                .mapToDouble(v -> Math.abs(values[v] - centroids[clusterIndex]))
+                .map(d -> Math.pow(d, 2))
+                /* sum up all distances */
+                .sum();
     }
 }

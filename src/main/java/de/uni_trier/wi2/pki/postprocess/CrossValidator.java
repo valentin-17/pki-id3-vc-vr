@@ -30,6 +30,9 @@ public class CrossValidator {
         DecisionTree bestModel = null;
         double bestAccuracy = 0.0;
 
+        /* Logging */
+        System.out.println("Performing cross-validation with " + numFolds + " folds...");
+
         /* Shuffle the dataset */
         Collections.shuffle(data);
 
@@ -48,16 +51,7 @@ public class CrossValidator {
 
             /* Train the model and evaluate it */
             DecisionTree model = trainFunction.apply(trainingSet, labelAttribute);
-            double accuracy = evaluateModel(model, validationSet, labelAttribute);
-
-            /* Save each model to a file */
-            String path = "target/classes/decision_tree_" + i + ".xml";
-
-            try {
-                XMLWriter.writeXML(path, model);
-            } catch (IOException ioe) {
-                System.out.println(ioe.getMessage());
-            }
+            double accuracy = ID3Utils.getClassificationAccuracy(model, validationSet, labelAttribute);
 
             if (accuracy > bestAccuracy) {
                 bestAccuracy = accuracy;
@@ -65,30 +59,8 @@ public class CrossValidator {
             }
         }
 
+        System.out.println("Cross-validation finished.");
         System.out.printf("Classification accuracy of best model: %.2f%%", bestAccuracy * 100);
         return bestModel;
-    }
-
-    /**
-     * Evaluates the given model with the specified validation set.
-     *
-     * @param model          the model to evaluate.
-     * @param validationSet  the validation set to use.
-     * @param labelAttribute the label attribute.
-     * @return the classification accuracy of the model.
-     */
-    private static double evaluateModel(DecisionTree model, List<Object[]> validationSet, int labelAttribute) {
-        int correct = 0;
-
-        /* Predict the class of each example and compare it to the actual class */
-        for (Object[] instance : validationSet) {
-            Object predicted = model.predict(instance);
-            Object actual = instance[labelAttribute];
-
-            if (predicted.equals(actual)) {
-                correct++;
-            }
-        }
-        return (double) correct / validationSet.size();
     }
 }

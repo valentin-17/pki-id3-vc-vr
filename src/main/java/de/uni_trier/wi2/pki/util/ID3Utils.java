@@ -111,6 +111,7 @@ public class ID3Utils {
 
         for (Object[] example : examples) {
             String key = example[efficientAttributeIndex].toString();
+
             /* Creates a map where key is attributeIndex and value contains all examples with the given attributeIndex */
             partitions.computeIfAbsent(key, (k -> new ArrayList<>())).add(example);
         }
