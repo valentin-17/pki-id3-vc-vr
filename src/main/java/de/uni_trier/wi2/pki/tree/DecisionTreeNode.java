@@ -59,9 +59,25 @@ public class DecisionTreeNode {
      * @return the leaf node.
      */
     protected DecisionTreeNode getClassificationNode(Object[] example) {
-        //tmp
+        DecisionTreeNode currentNode = this;
+
+        while (currentNode != null) {
+
+            if (currentNode.isLeafNode()) {
+                return currentNode;
+            }
+            int attributeIndex = currentNode.getAttributeIndex();
+            if (attributeIndex < 0 || attributeIndex >= example.length) {
+                throw new IllegalArgumentException("Invalid attribute index: " + attributeIndex);
+            }
+
+            String attributeValue = (String) example[attributeIndex];
+            currentNode = currentNode.getSplits().get(attributeValue);
+
+        }
         return null;
     }
+
 
     /**
      * Returns the index of the attribute used in the current node.

@@ -2,13 +2,10 @@ package de.uni_trier.wi2.pki.postprocess;
 
 import de.uni_trier.wi2.pki.io.XMLWriter;
 import de.uni_trier.wi2.pki.tree.DecisionTree;
-import de.uni_trier.wi2.pki.tree.DecisionTreeNode;
-import de.uni_trier.wi2.pki.tree.DecisionTreeLeafNode;
 import de.uni_trier.wi2.pki.util.ID3Utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -26,11 +23,15 @@ public class CrossValidator {
      * @param trainFunction  the function to train the model with.
      * @param numFolds       the number of data folds.
      */
-    public static DecisionTree performCrossValidation(List<Object[]> dataset, int labelAttribute, BiFunction<List<Object[]>, Integer, DecisionTree> trainFunction, int numFolds) {
+    public static DecisionTree performCrossValidation(List<Object[]> dataset, int labelAttribute, BiFunction<List<Object[]>, Integer, DecisionTree> trainFunction,
+                                                      int numFolds) {
         ArrayList<Object[]> data = new ArrayList<>(dataset);
         int foldSize = dataset.size() / numFolds;
         DecisionTree bestModel = null;
         double bestAccuracy = 0.0;
+
+        /* Logging */
+        System.out.println("Performing cross-validation with " + numFolds + " folds...");
 
         /* Shuffle the dataset */
         Collections.shuffle(data);
@@ -50,16 +51,7 @@ public class CrossValidator {
 
             /* Train the model and evaluate it */
             DecisionTree model = trainFunction.apply(trainingSet, labelAttribute);
-            double accuracy = evaluateModel(model, validationSet, labelAttribute);
-
-            /* Save each model to a file */
-            String path = "target/classes/decision_tree_" + i + ".xml";
-
-            try {
-                XMLWriter.writeXML(path, model);
-            } catch (IOException ioe) {
-                System.out.println(ioe.getMessage());
-            }
+            double accuracy = ID3Utils.getClassificationAccuracy(model, validationSet, labelAttribute);
 
             if (accuracy > bestAccuracy) {
                 bestAccuracy = accuracy;
@@ -67,55 +59,8 @@ public class CrossValidator {
             }
         }
 
+        System.out.println("Cross-validation finished.");
         System.out.printf("Classification accuracy of best model: %.2f%%", bestAccuracy * 100);
         return bestModel;
     }
-
-    /**
-     * Evaluates the given model with the specified validation set.
-     *
-     * @param model          the model to evaluate.
-     * @param validationSet  the validation set to use.
-     * @param labelAttribute the label attribute.
-     * @return the classification accuracy of the model.
-     */
-    private static double evaluateModel(DecisionTree model, List<Object[]> validationSet, int labelAttribute) {
-        int correct = 0;
-
-        if (model == null) {
-            throw new IllegalArgumentException("Der Baum ist null.");
-        }
-
-        /* Predict the class of each example and compare it to the actual class */
-        for (Object[] instance : validationSet) {
-            Object predicted = model.predict(instance);
-            Object actual = instance[labelAttribute];
-
-            if (predicted.equals(actual)) {
-                correct++;
-            }
-        }
-        return (double) correct / validationSet.size();
-    }
-
-
-    /*
-    public static double getClassificationAccuracy(DecisionTreeNode root, List<Object[]> testData, int labelIndex) {
-        int correct = 0;
-        for (Object[] example : testData) {
-            DecisionTreeNode currentNode = root;
-            while (currentNode != null && !currentNode.isLeaf()) {
-                String attributeValue = String.valueOf(example[currentNode.getAttributeIndex()].getValue());
-                currentNode = currentNode.getSplits().get(attributeValue);
-            }
-            if (currentNode != null && currentNode.getClassLabel() != null && currentNode.getClassLabel().equals(example[labelIndex].getValue())) {
-                correct++;
-            }
-        }
-        return testData.size() > 0 ? (double) correct / testData.size() : 0;
-    }
-
-     */
-
-
 }
