@@ -2,10 +2,13 @@ package de.uni_trier.wi2.pki.postprocess;
 
 import de.uni_trier.wi2.pki.io.XMLWriter;
 import de.uni_trier.wi2.pki.tree.DecisionTree;
+import de.uni_trier.wi2.pki.tree.DecisionTreeNode;
+import de.uni_trier.wi2.pki.tree.DecisionTreeLeafNode;
 import de.uni_trier.wi2.pki.util.ID3Utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -23,8 +26,7 @@ public class CrossValidator {
      * @param trainFunction  the function to train the model with.
      * @param numFolds       the number of data folds.
      */
-    public static DecisionTree performCrossValidation(List<Object[]> dataset, int labelAttribute, BiFunction<List<Object[]>, Integer, DecisionTree> trainFunction,
-                                                      int numFolds) {
+    public static DecisionTree performCrossValidation(List<Object[]> dataset, int labelAttribute, BiFunction<List<Object[]>, Integer, DecisionTree> trainFunction, int numFolds) {
         ArrayList<Object[]> data = new ArrayList<>(dataset);
         int foldSize = dataset.size() / numFolds;
         DecisionTree bestModel = null;
@@ -80,6 +82,10 @@ public class CrossValidator {
     private static double evaluateModel(DecisionTree model, List<Object[]> validationSet, int labelAttribute) {
         int correct = 0;
 
+        if (model == null) {
+            throw new IllegalArgumentException("Der Baum ist null.");
+        }
+
         /* Predict the class of each example and compare it to the actual class */
         for (Object[] instance : validationSet) {
             Object predicted = model.predict(instance);
@@ -91,4 +97,25 @@ public class CrossValidator {
         }
         return (double) correct / validationSet.size();
     }
+
+
+    /*
+    public static double getClassificationAccuracy(DecisionTreeNode root, List<Object[]> testData, int labelIndex) {
+        int correct = 0;
+        for (Object[] example : testData) {
+            DecisionTreeNode currentNode = root;
+            while (currentNode != null && !currentNode.isLeaf()) {
+                String attributeValue = String.valueOf(example[currentNode.getAttributeIndex()].getValue());
+                currentNode = currentNode.getSplits().get(attributeValue);
+            }
+            if (currentNode != null && currentNode.getClassLabel() != null && currentNode.getClassLabel().equals(example[labelIndex].getValue())) {
+                correct++;
+            }
+        }
+        return testData.size() > 0 ? (double) correct / testData.size() : 0;
+    }
+
+     */
+
+
 }

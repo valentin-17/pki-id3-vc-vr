@@ -3,16 +3,19 @@ package de.uni_trier.wi2.pki;
 import de.uni_trier.wi2.pki.io.CSVReader;
 import de.uni_trier.wi2.pki.io.XMLWriter;
 import de.uni_trier.wi2.pki.postprocess.CrossValidator;
+import de.uni_trier.wi2.pki.postprocess.ReducedErrorPruner;
 import de.uni_trier.wi2.pki.preprocess.EqualFrequencyDiscretization;
 import de.uni_trier.wi2.pki.preprocess.EqualWidthDiscretization;
 import de.uni_trier.wi2.pki.preprocess.KMeansDiscretizer;
 import de.uni_trier.wi2.pki.tree.DecisionTree;
+import de.uni_trier.wi2.pki.tree.DecisionTreeNode;
 import de.uni_trier.wi2.pki.util.ID3Utils;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static de.uni_trier.wi2.pki.util.Helpers.convertToObjectList;
@@ -23,19 +26,19 @@ public class Main {
     public static String[] HEADER = null;
 
     public static void main(String[] args) {
+
         // some constants
         final String FILE_NAME = "churn_data.csv";
         final int LABEL_ATTR_INDEX = 0;
         final String delim = ";";
+        final int NUMBER_OF_FOLDS = 5;
 
-        //discretization params
         EqualFrequencyDiscretization efd = new EqualFrequencyDiscretization();
         EqualWidthDiscretization ewd = new EqualWidthDiscretization();
         KMeansDiscretizer kmd = new KMeansDiscretizer();
         int BINS = 5;
         int ATTRIBUTE_ID;
 
-        // parse CSV data
         List<String[]> parsedLines = null;
         try {
             parsedLines = CSVReader.readCsvToArray("target/classes/" + FILE_NAME, delim, true);
@@ -44,12 +47,10 @@ public class Main {
             System.out.println(e.getMessage());
         }
 
-        // check if any data was parsed
         if (parsedLines == null) {
             throw new RuntimeException("No data parsed");
         }
 
-        // define data types of the dataset
         ArrayList<Boolean> attrIsContinuous = new ArrayList<>();
         attrIsContinuous.add(0, true);
         attrIsContinuous.add(1, false);
@@ -62,6 +63,15 @@ public class Main {
         attrIsContinuous.add(8, false);
         attrIsContinuous.add(9, true);
         attrIsContinuous.add(10, false);
+
+        /// KMeans
+        List<Object[]> KMeansDiscretizedData = convertToObjectList(parsedLinesSmall);
+
+        /// EWD
+        List<Object[]> EWDDiscretizedData = convertToObjectList(parsedLinesSmall);
+
+        /// EFD
+        List<Object[]> EFDDiscretizedData = convertToObjectList(parsedLinesSmall);
         // Train model, evaluate model, write XML, ...
 
         List<String[]> parsedLinesSmall = parsedLines.subList(0, 10);
@@ -81,6 +91,10 @@ public class Main {
         EFDDiscretizedData = efd.discretize(BINS, EFDDiscretizedData, 5);
         EFDDiscretizedData = efd.discretize(BINS, EFDDiscretizedData, 9);
 
+
+        DecisionTree bestModel_BP = CrossValidator.performCrossValidation(KMeansDiscretizedData, LABEL_ATTR_INDEX, ID3Utils::createTree, NUMBER_OF_FOLDS);
+
+
         EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 0);
         EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 3);
         EWDDiscretizedData = ewd.discretize(BINS, EWDDiscretizedData, 4);
@@ -99,5 +113,8 @@ public class Main {
         } catch (IOException ioe) {
             System.out.println(ioe.getMessage());
         }
+
+        DecisionTree bestModel_AP = CrossValidator.performCrossValidation(KMeansDiscretizedData, LABEL_ATTR_INDEX, ID3Utils::createTree, NUMBER_OF_FOLDS);
+        System.out.println("nach CrossValidation: 2");
     }
 }
