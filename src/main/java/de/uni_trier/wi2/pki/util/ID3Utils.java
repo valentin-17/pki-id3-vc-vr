@@ -114,16 +114,6 @@ public class ID3Utils {
             /* Creates a map where key is attributeIndex and value contains all examples with the given attributeIndex */
             partitions.computeIfAbsent(key, (k -> new ArrayList<>())).add(example);
         }
-
-        /// Anker start
-        System.out.println();
-        System.out.println("*** In partitionExamples ***");
-        System.out.println("partitions:");
-        for (Map.Entry<Object, List<Object[]>> entry : partitions.entrySet()) {
-            System.out.println(entry.getKey() + ":" + entry.getValue().toString());
-        }
-        /// Anker end
-
         return partitions;
     }
 

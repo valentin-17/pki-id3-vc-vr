@@ -39,16 +39,6 @@ public class DecisionTreeNode {
         this.attributeIndex = attributeIndex;
         this.elements = elements;
         splits = new HashMap<>();
-
-        /// Anker start
-        System.out.println();
-        System.out.println("*** In DecisionTreeNode constructor ***");
-        System.out.println("Attribute Index: " + attributeIndex);
-        System.out.println("elements:");
-        for (Object[] element : elements) {
-            System.out.println(Arrays.toString(element));
-        }
-        /// Anker end
     }
 
     /**
@@ -58,6 +48,7 @@ public class DecisionTreeNode {
      * @param decisionTreeNode Child decision tree node.
      */
     public void addSplit(String Object, DecisionTreeNode decisionTreeNode) {
+        decisionTreeNode.parent = this;
         splits.put(Object, decisionTreeNode);
     }
 
@@ -68,7 +59,22 @@ public class DecisionTreeNode {
      * @return the leaf node.
      */
     protected DecisionTreeNode getClassificationNode(Object[] example) {
-        //tmp
+        DecisionTreeNode currentNode = this;
+
+        while (currentNode != null) {
+
+            if (currentNode.isLeafNode()) {
+                return currentNode;
+            }
+            int attributeIndex = currentNode.getAttributeIndex();
+            if (attributeIndex < 0 || attributeIndex >= example.length) {
+                throw new IllegalArgumentException("Invalid attribute index: " + attributeIndex);
+            }
+
+            String attributeValue = (String) example[attributeIndex];
+            currentNode = currentNode.getSplits().get(attributeValue);
+
+        }
         return null;
     }
 

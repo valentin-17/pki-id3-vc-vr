@@ -13,13 +13,6 @@ import java.util.List;
  * Prunes a trained decision tree in a post-pruning way.
  */
 public class ReducedErrorPruner {
-
-    /*if error (parent) < error (child){then prune the child node}
-    else dont prune the child node
-     */
-
-    int numberOfNodes = 0;
-
     /**
      * The starting classification accuracy.
      */
@@ -38,6 +31,7 @@ public class ReducedErrorPruner {
      * @param labelAttributeId    The label attribute.
      */
     public void prune(DecisionTree trainedDecisionTree, Collection<Object[]> validationExamples, int labelAttributeId) {
+        this.decisionTree = trainedDecisionTree;
         pruneTree(trainedDecisionTree, validationExamples, labelAttributeId);
     }
 
@@ -48,66 +42,76 @@ public class ReducedErrorPruner {
      * @param validationExamples      the validation examples.
      * @param labelAttributeIndex     the label attribute index
      */
-    private void pruneTree(DecisionTreeNode currentDecisionTreeNode, Collection<Object[]> validationExamples, int labelAttributeIndex) {
 
-        numberOfNodes++;
-        System.out.println(numberOfNodes);
-        /// Anker start
-        System.out.println("in pruneTree");
-
-        if (currentDecisionTreeNode.isLeafNode()) {
-            System.out.println("in pruneTree - isLeafNode");
-            System.out.println("jetzt haben wir den ersten leaf knoten gefunden");
-            numberOfNodes--;
+    public void pruneTree(DecisionTreeNode currentDecisionTreeNode, Collection<Object[]> validationExamples, int labelAttributeIndex) {
+        if (currentDecisionTreeNode == null || currentDecisionTreeNode.isLeafNode()) {
             return;
         }
 
+        // Collect child nodes into a temporary list to avoid concurrent modification
+        List<DecisionTreeNode> childNodesSet = new ArrayList<>(currentDecisionTreeNode.getSplits().values());
 
-        for (DecisionTreeNode childNode : currentDecisionTreeNode.getSplits().values()) {
-            System.out.println("in pruneTree - for loop");
+        // Recursively prune each child node
+        for (DecisionTreeNode childNode : childNodesSet) {
             pruneTree(childNode, validationExamples, labelAttributeIndex);
         }
 
-        System.out.println("in pruneTree - after for loop");
-        classificationAccuracy = getTreeAccuracy(currentDecisionTreeNode, validationExamples, labelAttributeIndex);
-        System.out.println("in pruneTree - classificationAccuracy: " + classificationAccuracy);
+        // Attempt to prune this node
+        classificationAccuracy = ID3Utils.getClassificationAccuracy(decisionTree, validationExamples, labelAttributeIndex);
 
         String dominantClass = ID3Utils.getDominantClass(currentDecisionTreeNode.getElements(), labelAttributeIndex);
-        System.out.println("in pruneTree - dominantClass");
         DecisionTreeLeafNode prunedLeafNode = new DecisionTreeLeafNode(currentDecisionTreeNode.getParent(), currentDecisionTreeNode.getElements(), dominantClass);
-        System.out.println("in pruneTree - prunedLeafNode");
 
-        double classificationAccuracyAfterPruning = getTreeAccuracyAfterPruning(currentDecisionTreeNode, prunedLeafNode, validationExamples, labelAttributeIndex);
-        System.out.println("in pruneTree - classificationAccuracyAfterPruning");
+        double prunedAccuracy = getTreeAccuracyAfterPruning(currentDecisionTreeNode, prunedLeafNode, validationExamples, labelAttributeIndex);
 
-        if (classificationAccuracyAfterPruning >= classificationAccuracy) {
-            System.out.println("in pruneTree - if");
+        if (prunedAccuracy >= classificationAccuracy) {
             if (currentDecisionTreeNode.getParent() != null) {
-                currentDecisionTreeNode.getParent().addSplit(null, prunedLeafNode);
+                currentDecisionTreeNode.getParent().addSplit(currentDecisionTreeNode.getAttributeIndex() + "", prunedLeafNode);
+            } /*else {
+                System.err.println("***********Warning: Attempted to prune root node.");
+
             }
+            */
         }
     }
 
-    /**
-     * Calculate the accuracy of the current tree structure on the validation set.
-     * This method walks through the current tree to make predictions and check accuracy.
-     */
+
     private double getTreeAccuracy(DecisionTreeNode node, Collection<Object[]> validationExamples, int labelAttributeId) {
         int correctPredictions = 0;
+
         for (Object[] example : validationExamples) {
             DecisionTreeNode currentNode = node;
+
+            // Traverse the tree for this example
             while (currentNode != null && !currentNode.isLeafNode()) {
                 String attributeValue = example[currentNode.getAttributeIndex()].toString();
+
+                // Handle case where no split exists for the attribute value
+                if (!currentNode.getSplits().containsKey(attributeValue)) {
+                    System.err.println("----Warning: Missing split for attribute value: " + attributeValue);
+                    currentNode = null; // Break out of the loop
+                    break;
+                }
+
                 currentNode = currentNode.getSplits().get(attributeValue);
             }
-            String predictedLabel = currentNode.getElements().iterator().next()[labelAttributeId].toString();
-            String actualLabel = example[labelAttributeId].toString();
-            if (predictedLabel.equals(actualLabel)) {
-                correctPredictions++;
+
+            // If we successfully reached a leaf node, check the prediction
+            if (currentNode != null && currentNode.isLeafNode()) {
+                String predictedLabel = currentNode.getElements().iterator().next()[labelAttributeId].toString();
+                String actualLabel = example[labelAttributeId].toString();
+                if (predictedLabel.equals(actualLabel)) {
+                    correctPredictions++;
+                }
+            } else {
+                System.err.println("Warning: Could not classify example due to incomplete tree traversal.");
             }
         }
+
         return (double) correctPredictions / validationExamples.size();
     }
+
+
 
     /**
      * Calculate the accuracy of the tree if we prune the given node.
@@ -125,95 +129,4 @@ public class ReducedErrorPruner {
         }
         return (double) correctPredictions / validationExamples.size();
     }
-
-
-    /**
-     * public void pruneTree(DecisionTreeNode node, Collection<Object[]> validationExamples, int labelAttributeId) {
-     *     // If the node is a leaf node, return (we can't prune leaves)
-     *     if (node.isLeafNode()) {
-     *         return;
-     *     }
-     *
-     *     // Prune the child nodes recursively first
-     *     for (DecisionTreeNode childNode : node.getSplits().values()) {
-     *         pruneTree(childNode, validationExamples, labelAttributeId);
-     *     }
-     *
-     *     // Now, attempt to prune this node by turning it into a leaf
-     *     // Let's first calculate the accuracy of the current tree
-     *     double currentAccuracy = getTreeAccuracy(node, validationExamples, labelAttributeId);
-     *
-     *     // Convert the current node into a leaf node with the most common class in its data
-     *     String dominantClass = getDominantClass(node.getElements(), labelAttributeId);
-     *     DecisionTreeLeafNode prunedLeafNode = new DecisionTreeLeafNode(node.getParent(), node.getElements(), dominantClass);
-     *
-     *     // Calculate the accuracy of the tree after pruning this node
-     *     double prunedAccuracy = getTreeAccuracyAfterPruning(node, prunedLeafNode, validationExamples, labelAttributeId);
-     *
-     *     // If pruning improves or maintains the accuracy, then prune the node
-     *     if (prunedAccuracy >= currentAccuracy) {
-     *         // Replace the current node with the pruned leaf node
-     *         if (node.getParent() != null) {
-     *             node.getParent().addSplit(node.getAttributeIndex() + "", prunedLeafNode);
-     *         }
-     *     }
-     * }
-     *
-     *
-     *  * Helper method to calculate the accuracy of the tree (or subtree) with the current structure.
-     *
-     *
-
-    private double getTreeAccuracy(DecisionTreeNode node, Collection<Object[]> validationExamples, int labelAttributeId) {
-     *DecisionTree tree = new DecisionTree(node);
-     *return ID3Utils.getClassificationAccuracy(tree, validationExamples, labelAttributeId);
-     *}
-     *
-             *
-      *  * Helper method to calculate the accuracy after pruning a node.
-      *  * In this case, the node is pruned by replacing it with a leaf node.
-      *
-             *
-
-    private double getTreeAccuracyAfterPruning(DecisionTreeNode node, DecisionTreeLeafNode prunedLeafNode, Collection<Object[]> validationExamples, int labelAttributeId) {
-     *     // Create a new tree with the pruned leaf node
-     *DecisionTree prunedTree = new DecisionTree(prunedLeafNode);
-     *return ID3Utils.getClassificationAccuracy(prunedTree, validationExamples, labelAttributeId);
-     *}
-     */
-
-    /*
-    private void pruneTree(DecisionTreeNode currentDecisionTreeNode, Collection<Object[]> validationExamples, int labelAttributeIndex) {
-        // If the current node is a leaf node, no pruning is needed
-        if (currentDecisionTreeNode.isLeafNode()) {
-            return;
-        }
-
-        // Recursively prune all child nodes
-        for (DecisionTreeNode child : currentDecisionTreeNode.getSplits().values()) {
-            pruneTree(child, validationExamples, labelAttributeIndex);
-        }
-
-        // Store the original splits (children) to restore if needed
-        Map<String, DecisionTreeNode> originalSplits = new HashMap<>(currentDecisionTreeNode.getSplits());
-
-        // Prune the current node by converting it to a leaf node
-        String dominantClass = ID3Utils.getDominantClass(currentDecisionTreeNode.getElements(), labelAttributeIndex);
-
-        // Convert the current node to a leaf node (by removing its splits)
-        currentDecisionTreeNode.splits.clear(); // Clear the splits
-        currentDecisionTreeNode.splits.put(dominantClass, new DecisionTreeNode(currentDecisionTreeNode, currentDecisionTreeNode.getElements(), -1));
-
-        // Evaluate the accuracy after pruning
-        double accuracyAfterPruning = ID3Utils.getClassificationAccuracy(decisionTree, validationExamples, labelAttributeIndex);
-
-        // If pruning results in worse accuracy, revert the changes
-        if (accuracyAfterPruning < classificationAccuracy) {
-            // Restore the original splits (undo pruning)
-            currentDecisionTreeNode.splits = originalSplits;
-        }
-    }
-
-     */
-
 }

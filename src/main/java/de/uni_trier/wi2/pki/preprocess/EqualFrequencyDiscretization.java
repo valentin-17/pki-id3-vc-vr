@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-import static de.uni_trier.wi2.pki.util.Helpers.printData;
 
 /**
  * Class that holds logic for discretizing values.
