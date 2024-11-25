@@ -4,15 +4,16 @@ import de.uni_trier.wi2.pki.Main;
 import de.uni_trier.wi2.pki.settings.ID3Settings;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
+
+import static de.uni_trier.wi2.pki.Main.id3Settings;
 
 /**
  * Class that holds logic for discretizing values using K-means clustering.
  */
 public class KMeansDiscretizer extends BinningDiscretizer {
-
-    ID3Settings id3Settings = new ID3Settings();
 
     /**
      * Discretizes a collection of examples according to the number of bins (clusters) and the respective attribute ID.
@@ -23,62 +24,115 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      * @return the list of discretized examples.
      */
     public List<Object[]> discretize(int numberOfBins, List<Object[]> examples, int attributeId) {
-        String[] binNames;
         ArrayList<Object[]> examplesList = new ArrayList<>(examples);
-        double quality_new = Double.MAX_VALUE;
-        double quality_old = 0;
-        double epsilon = id3Settings.getEpsilon();
-        double[] values = null;
-        double[] centroids = null;
-        int[] clusters = new int[examplesList.size()];
+        double[] values = parseNumericValues(examplesList, attributeId);
+        double[] centroids = initializeCentroids(values, numberOfBins);
 
-        /* check if attribute to discretize is numeric */
-        try {
-            values = examplesList.stream().mapToDouble(e -> Double.parseDouble((String) e[attributeId])).toArray();
-            centroids = initializeCentroids(values, numberOfBins);
-        } catch (NumberFormatException nfe) {
-            System.out.println("Could not initialize Centroids. Attribute must be numeric! " + nfe.getMessage());
-        }
+        int[] clusters = runKMeansClustering(values, centroids, numberOfBins);
 
-        /* check if values and centroids are initialized */
-        assert values != null;
-        assert centroids != null;
+        String [] binNames = createBinNames(numberOfBins, values, clusters, attributeId);
 
-        /* clustering loop */
-        while (Math.abs(quality_old - quality_new) >= epsilon) {
+        printBinNames(binNames);
 
-            /* Assign each example to the nearest centroid */
-            for (int i = 0; i < examplesList.size(); i++) {
-                Object[] example = examplesList.get(i);
-                int nearestCentroid = findNearestCentroid(Double.parseDouble((String) example[attributeId]), centroids);
+        return assignBinNamesToExamples(examplesList, clusters, binNames, attributeId);
+    }
 
-                clusters[i] = nearestCentroid;
-            }
-
-            /* Recalculate the centroids based on the current cluster assignments */
-            centroids = calculateNewCentroids(values, clusters, numberOfBins);
-
-            /* Update the quality measure */
-            quality_old = quality_new;
-            quality_new = calculateQuality(values, centroids, clusters);
-            System.out.println("NEW Quality: " + quality_new);
-        }
-
-        binNames = createBinNames(numberOfBins, values, clusters, attributeId);
-
-        /* Print the final bins */
-        System.out.printf("Final bins for attribute %s with bounds:\n", Main.HEADER[attributeId]);
-        for (String binName : binNames) {
-            System.out.printf("- %s\n", binName);
-        }
-        System.out.println();
-
-        /* Assign bin names to examples */
-        return examplesList.stream().peek(e -> {
-            if (examples.contains(e)) {
-                e[attributeId] = binNames[clusters[examples.indexOf(e)]];
-            }
+    /**
+     * Assigns the bin names to the examples.
+     *
+     * @param examples The examples to assign the bin names to.
+     * @param clusters The cluster assignments.
+     * @param binNames The bin names.
+     * @param attributeId The ID of the attribute to assign the bin names to.
+     * @return The examples with the bin names assigned.
+     */
+    private List<Object[]> assignBinNamesToExamples(List<Object[]> examples, int[] clusters, String[] binNames, int attributeId) {
+        return examples.stream().peek(e -> {
+            int clusterIndex = clusters[examples.indexOf(e)];
+            e[attributeId] = binNames[clusterIndex];
         }).toList();
+    }
+
+
+    /**
+     * Parses the numeric values from the examples.
+     *
+     * @param examples    The examples to parse.
+     * @param attributeId The ID of the attribute to parse.
+     * @return An array of parsed numeric values.
+     */
+    private double[] parseNumericValues(List<Object[]> examples, int attributeId) {
+        try {
+            return examples.stream()
+                    .mapToDouble(e -> Double.parseDouble((String) e[attributeId]))
+                    .toArray();
+        } catch (NumberFormatException nfe) {
+            throw new IllegalArgumentException("Attribute must be numeric! " + nfe.getMessage());
+        }
+    }
+
+    /**
+     * Assigns each value to the nearest centroid.
+     *
+     * @param values    The values to cluster.
+     * @param centroids The current centroids.
+     * @return An array of cluster assignments.
+     */
+    private int[] runKMeansClustering(double[] values, double[] centroids, int numberOfBins) {
+        int[] clusters = new int[values.length];
+        double qualityOld = 0;
+        double qualityNew = Double.MAX_VALUE;
+        final double epsilon = id3Settings.getEpsilon();
+
+        while (Math.abs(qualityOld - qualityNew) >= epsilon) {
+            clusters = assignClusters(values, centroids);
+            centroids = recalculateCentroids(values, clusters, numberOfBins);
+
+            qualityOld = qualityNew;
+            qualityNew = calculateQuality(values, centroids, clusters);
+        }
+
+        return clusters;
+    }
+
+    /**
+     * Calculates the mean of all values assigned to a cluster.
+     *
+     * @param values The original values.
+     * @param clusters The current cluster assignments.
+     * @param clusters The index of the cluster to calculate.
+     * @return The mean of all values assigned to the given cluster.
+     */
+    private double[] recalculateCentroids(double[] values, int[] clusters, int numberOfBins) {
+        return IntStream.range(0, numberOfBins)
+                .mapToDouble(cluster -> calculateClusterMean(values, clusters, cluster))
+                .toArray();
+    }
+
+    /**
+     * Calculates the mean of all values assigned to a cluster.
+     *
+     * @param values The original values.
+     * @param clusters The current cluster assignments.
+     * @param clusterIndex The index of the cluster to calculate.
+     * @return The mean of all values assigned to the given cluster.
+     */
+    private double calculateClusterMean(double[] values, int[] clusters, int clusterIndex) {
+        double clusterSum = calculateClusterSum(values, clusters, clusterIndex);
+        long clusterSize = Arrays.stream(clusters).filter(c -> c == clusterIndex).count();
+        return clusterSize == 0 ? 0 : clusterSum / clusterSize;
+    }
+
+    /**
+     * Assigns each value to the nearest centroid.
+     *
+     * @param values The values to cluster.
+     * @param centroids The current centroids.
+     * @return An array of cluster assignments.
+     */
+    private int[] assignClusters(double[] values, double[] centroids) {
+        return Arrays.stream(values).mapToInt(value -> findNearestCentroid(value, centroids))
+                .toArray();
     }
 
     /**
@@ -91,37 +145,16 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      * @return An array of bin names.
      */
     private String[] createBinNames(int numberOfBins, double[] values, int[] clusters, int attributeId) {
-        String[] binNames = new String[numberOfBins];
         double[] minValues = new double[numberOfBins];
         double[] maxValues = new double[numberOfBins];
-
         Arrays.fill(minValues, Double.POSITIVE_INFINITY);
         Arrays.fill(maxValues, Double.NEGATIVE_INFINITY);
 
-        /* Calculate the min and max values for each bin */
-        for (int i = 0; i < values.length; i++) {
-            int cluster = clusters[i];
-            double value = values[i];
-            if (value < minValues[cluster]) {
-                minValues[cluster] = value;
-            }
-            if (value > maxValues[cluster]) {
-                maxValues[cluster] = value;
-            }
-        }
+        updateMinMaxValues(values, clusters, minValues, maxValues);
 
-        /* Create bin names */
-        for (int i = 0; i < numberOfBins; i++) {
-            double lowerBound = minValues[i];
-            double upperBound = maxValues[i];
-            if (lowerBound == Double.POSITIVE_INFINITY && upperBound == Double.NEGATIVE_INFINITY) {
-                binNames[i] = String.format("%s: [empty]", Main.HEADER[attributeId]);
-            } else {
-                binNames[i] = String.format("%s: [%s; %s]", Main.HEADER[attributeId], lowerBound, upperBound);
-            }
-        }
-
-        return binNames;
+        return IntStream.range(0, numberOfBins)
+                .mapToObj(i -> formatBinName(Main.HEADER[attributeId], minValues[i], maxValues[i]))
+                .toArray(String[]::new);
     }
 
     /**
@@ -132,18 +165,11 @@ public class KMeansDiscretizer extends BinningDiscretizer {
      * @return An array of initial centroids.
      */
     private double[] initializeCentroids(double[] values, int numberOfBins) {
-        ArrayList<Double> tmpValues = new ArrayList<>(DoubleStream.of(values).boxed().toList());
-        double[] centroids = new double[numberOfBins];
-
-        /* shuffling the values ensures random selection of centroids */
-        Collections.shuffle(tmpValues);
-
-        /* pick the first n (numberOfBins) values as initial centroids because of random shuffling we can simply use the first n values */
-        for (int i = 0; i < numberOfBins; i++) {
-            centroids[i] = tmpValues.get(i);
-        }
-        
-        return centroids;
+        List<Double> shuffledValues = DoubleStream.of(values).boxed().collect(Collectors.toList());
+        Collections.shuffle(shuffledValues);
+        return IntStream.range(0, numberOfBins)
+                .mapToDouble(shuffledValues::get)
+                .toArray();
     }
 
     /**
@@ -168,32 +194,6 @@ public class KMeansDiscretizer extends BinningDiscretizer {
         }
 
         return index;
-    }
-
-    /**
-     * Calculates new centroids based on current cluster assignments.
-     *
-     * @param values       The original values.
-     * @param clusters     The current cluster assignments.
-     * @param numberOfBins The number of clusters.
-     * @return The recalculated centroids.
-     */
-    private double[] calculateNewCentroids(double[] values, int[] clusters, int numberOfBins) {
-        double[] centroids = new double[numberOfBins];
-
-        /* Loop through all clusters and calculate the new centroid as the mean of all values in the cluster */
-        for (int i = 0; i < numberOfBins; i++) {
-            int clusterIndex = i;
-            /* count the examples assigned to clusterIndex */
-            int clusterSize = (int) Arrays.stream(clusters).filter(c -> c == clusterIndex).count();
-            /* calculate the sum of all values assigned to clusterIndex */
-            double clusterSum = calculateClusterSum(values, clusters, i);
-
-            /* apply the formula for new centroids */
-            centroids[i] = (double) 1 / clusterSize * clusterSum;
-        }
-
-        return centroids;
     }
 
     /**
@@ -252,5 +252,49 @@ public class KMeansDiscretizer extends BinningDiscretizer {
                 .map(d -> Math.pow(d, 2))
                 /* sum up all distances */
                 .sum();
+    }
+
+    /**
+     * Updates the min and max values for each cluster
+     *
+     * @param values The values to update the min and max values for
+     * @param clusters The current cluster assignments
+     * @param minValues The current minimum values for each cluster
+     * @param maxValues The current maximum values for each cluster
+     */
+    private void updateMinMaxValues(double[] values, int[] clusters, double[] minValues, double[] maxValues) {
+        IntStream.range(0, values.length).forEach(i -> {
+            int cluster = clusters[i];
+            double value = values[i];
+            minValues[cluster] = Math.min(minValues[cluster], value);
+            maxValues[cluster] = Math.max(maxValues[cluster], value);
+        });
+    }
+
+    /**
+     * Format the Bin names
+     *
+     * @param attributeName The name of the attribute
+     * @param minValue The minimum value of the bin
+     * @param maxValue The maximum value of the bin
+     * @return The formatted bin name
+     */
+    private String formatBinName(String attributeName, double minValue, double maxValue) {
+        if (minValue == Double.POSITIVE_INFINITY && maxValue == Double.NEGATIVE_INFINITY) {
+            return String.format("%s: [empty]", attributeName);
+        }
+        return String.format("%s: [%s; %s]", attributeName, minValue, maxValue);
+    }
+
+    /**
+     * Pints the bin names
+     *
+     * @param binNames The bin names to print
+     */
+    private void printBinNames(String[] binNames) {
+        System.out.println("Final bins with their bounds:");
+        for (String binName : binNames) {
+            System.out.println(binName);
+        }
     }
 }

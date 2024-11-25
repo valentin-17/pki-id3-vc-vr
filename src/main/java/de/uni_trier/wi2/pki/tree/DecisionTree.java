@@ -21,34 +21,13 @@ public class DecisionTree extends DecisionTreeNode {
      * @return the predicted class as a string
      */
     public String predict(Object[] example) {
-        if (example == null) {
-            throw new IllegalArgumentException("Example cannot be null");
-        }
-
-        DecisionTreeNode currentNode = this;
-
-        /* Traverse the tree until a leaf node is reached */
-        while (currentNode != null && !currentNode.isLeafNode()) {
-            int attributeIndex = currentNode.getAttributeIndex();
-            if (attributeIndex < 0 || attributeIndex >= example.length) {
-                throw new IllegalArgumentException("Invalid attribute index: " + attributeIndex);
-            }
-
-            String attributeValue = example[attributeIndex].toString();
-            currentNode = currentNode.getSplits().get(attributeValue);
-
-        }
-
-        /* Return the class of the leaf node if a leaf node is found */
-        if (currentNode != null && currentNode.isLeafNode()) {
+        DecisionTreeNode currentNode = getClassificationNode(example);
+        if (currentNode instanceof DecisionTreeLeafNode) {
             return ((DecisionTreeLeafNode) currentNode).getLabelClass();
         }
-
-        /*
-         * If no node is found up to this point then the prediction is not possible because there is no path for the given example
-         * thus the prediction is wrong and returns a wrong label which is then used to calculate the accuracy
-         */
-        return "No prediction possible";
+        else {
+            return "No leaf node found";
+        }
     }
 
     /**

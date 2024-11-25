@@ -15,6 +15,7 @@ import de.uni_trier.wi2.pki.settings.ID3Settings;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 import static de.uni_trier.wi2.pki.util.Helpers.convertToObjectList;
 
@@ -22,11 +23,11 @@ public class Main {
 
     /* global constants */
     public static String[] HEADER = null;
-    static final EqualFrequencyDiscretization EQUAL_FREQUENCY = new EqualFrequencyDiscretization();
-    static final EqualWidthDiscretization EQUAL_WIDTH = new EqualWidthDiscretization();
-    static final KMeansDiscretizer K_MEANS = new KMeansDiscretizer();
-    static final CSVSettings csvSettings = new CSVSettings();
-    static final ID3Settings id3Settings = new ID3Settings();
+    public static final EqualFrequencyDiscretization EQUAL_FREQUENCY = new EqualFrequencyDiscretization();
+    public static final EqualWidthDiscretization EQUAL_WIDTH = new EqualWidthDiscretization();
+    public static final KMeansDiscretizer K_MEANS = new KMeansDiscretizer();
+    public static final CSVSettings csvSettings = new CSVSettings();
+    public static final ID3Settings id3Settings = new ID3Settings();
 
     public static void main(String[] args) {
 
@@ -89,29 +90,48 @@ public class Main {
      * Prompt for settings values and set settings.
      */
     private static void settingsIO() {
+        Scanner sc = new Scanner(System.in);
+
         System.out.println("Enter the path of the CSV file:");
-        String fileName = System.console().readLine();
+        String fileName = sc.nextLine();
         csvSettings.setFileName(fileName);
 
         System.out.println("Enter the delimiter of the CSV file:");
-        String delim = System.console().readLine();
+        String delim = sc.nextLine();
         csvSettings.setDelimiter(delim);
 
         System.out.println("Enter the index of the label attribute:");
-        int labelAttrIndex = Integer.parseInt(System.console().readLine());
+        int labelAttrIndex = Integer.parseInt(sc.nextLine());
         csvSettings.setLabelAttributeIndex(labelAttrIndex);
 
         System.out.println("Enter the number of bins for discretization:");
-        int bins = Integer.parseInt(System.console().readLine());
+        int bins = Integer.parseInt(sc.nextLine());
         id3Settings.setBins(bins);
 
         System.out.println("Enter the number of folds for cross-validation:");
-        int numFolds = Integer.parseInt(System.console().readLine());
+        int numFolds = Integer.parseInt(sc.nextLine());
         id3Settings.setNumFolds(numFolds);
 
         System.out.println("Enter the value of epsilon for KMeans-discretization:");
-        double epsilon = Double.parseDouble(System.console().readLine());
+        double epsilon = Double.parseDouble(sc.nextLine());
         id3Settings.setEpsilon(epsilon);
+
+        System.out.println("Enter the discretization method (1: EqualFrequency, 2: EqualWidth, 3: KMeans):");
+        int method = Integer.parseInt(sc.nextLine());
+        switch (method) {
+            case 1:
+                id3Settings.setDiscretizingMethod(EQUAL_FREQUENCY);
+                break;
+            case 2:
+                id3Settings.setDiscretizingMethod(EQUAL_WIDTH);
+                break;
+            case 3:
+                id3Settings.setDiscretizingMethod(K_MEANS);
+                break;
+            default:
+                System.out.println("Invalid method. Using KMeans as default.");
+                id3Settings.setDiscretizingMethod(K_MEANS);
+        }
 
         System.out.println("Settings saved.");
     }
