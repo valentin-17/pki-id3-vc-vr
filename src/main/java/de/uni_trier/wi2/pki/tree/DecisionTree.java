@@ -21,31 +21,13 @@ public class DecisionTree extends DecisionTreeNode {
      * @return the predicted class as a string
      */
     public String predict(Object[] example) {
-        if (example == null) {
-            throw new IllegalArgumentException("Example cannot be null");
-        }
-
-        DecisionTreeNode currentNode = this;
-
-        System.out.println("Example: " + Arrays.toString(example));
-
-        /* Traverse the tree until a leaf node is reached */
-        while (currentNode != null && !currentNode.isLeafNode()) {
-            int attributeIndex = currentNode.getAttributeIndex();
-            if (attributeIndex < 0 || attributeIndex >= example.length) {
-                throw new IllegalArgumentException("Invalid attribute index: " + attributeIndex);
-            }
-
-            String attributeValue = (String) example[attributeIndex];
-            currentNode = currentNode.getSplits().get(attributeValue);
-        }
-
-        /* Return the class of the leaf node if a leaf node is found */
-        if (currentNode != null && currentNode.isLeafNode()) {
+        DecisionTreeNode currentNode = getClassificationNode(example);
+        if (currentNode instanceof DecisionTreeLeafNode) {
             return ((DecisionTreeLeafNode) currentNode).getLabelClass();
         }
-
-        throw new IllegalStateException("Prediction failed: no leaf node found");
+        else {
+            return "No leaf node found";
+        }
     }
 
     /**
