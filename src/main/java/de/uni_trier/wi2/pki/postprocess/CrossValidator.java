@@ -77,7 +77,7 @@ public class CrossValidator {
      * @param labelAttribute the label attribute.
      * @return the classification accuracy of the model.
      */
-    public static double evaluateModel(DecisionTree model, List<Object[]> validationSet, int labelAttribute) {
+    private static double evaluateModel(DecisionTree model, List<Object[]> validationSet, int labelAttribute) {
         int correct = 0;
 
         /* Predict the class of each example and compare it to the actual class */
