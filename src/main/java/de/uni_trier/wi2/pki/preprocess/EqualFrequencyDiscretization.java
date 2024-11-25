@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+import static de.uni_trier.wi2.pki.util.Helpers.printData;
 
 /**
  * Class that holds logic for discretizing values.
@@ -27,7 +28,12 @@ public class EqualFrequencyDiscretization extends BinningDiscretizer {
         int overflow = numberOfExamples % numberOfBins;
         ArrayList<Object[]> examplesList = new ArrayList<>(examples);
 
-        List<Object[]> sortedExamples = sortExamplesViaAttribute(examplesList, attributeId);
+        /* sort the given examples by the given attribute */
+        List<Object[]> sortedExamples = examplesList.stream()
+                .sorted(Comparator.comparing(o -> Double.parseDouble(o[attributeId].toString())))
+                .toList();
+
+        /* create bin names */
         String[] binNames = createBinNames(sortedExamples, attributeId, numberOfExamplesPerBin, numberOfBins, overflow);
 
         /* loop through the sorted examples and assign them to bins */
@@ -44,7 +50,7 @@ public class EqualFrequencyDiscretization extends BinningDiscretizer {
             currentIndex = endIndex + 1;
         }
 
-        System.out.println("Successfully discretized data into " + numberOfBins + " bins: " + Arrays.toString(binNames));
+            System.out.println("Successfully discretized data into " + numberOfBins + " bins: " + Arrays.toString(binNames));
         return sortedExamples;
     }
 
@@ -61,8 +67,9 @@ public class EqualFrequencyDiscretization extends BinningDiscretizer {
         String[] binNames = new String[numberOfBins];
         int currentIndex = 0;
 
-        // loop through the examples and create bin names
+        /* loop through the examples and create bin names */
         for (int i = 0; i < numberOfBins; i++) {
+
             int endIndex = calculateEndIndex(examples, numberOfExamplesPerBin, overflow, currentIndex, attributeId);
 
             String startVal = examples.get(currentIndex)[attributeId].toString();
@@ -75,6 +82,7 @@ public class EqualFrequencyDiscretization extends BinningDiscretizer {
                 currentIndex = endIndex + 1;
             }
         }
+
         return binNames;
     }
 
@@ -90,29 +98,20 @@ public class EqualFrequencyDiscretization extends BinningDiscretizer {
      * @return the end index of the bin.
      */
     private int calculateEndIndex (List<Object[]> examples, int numberOfExamplesPerBin, int overflow, int currentIndex, int attributeId) {
-        // calculate the size of the current bin by adding the number of examples per bin and the overflow
+        /* calculate the size of the current bin by adding the number of examples per bin and the overflow */
         int binSize = numberOfExamplesPerBin + (overflow > 0 ? 1 : 0);
         int endIndex = currentIndex + binSize - 1;
 
-        // if end index exceeds the examples list then the end index is automatically the last index of examples because the rest of examples goes in the last bin
+        /* if end index exceeds the examples list then the end index is automatically the last index of examples because the rest of examples goes in the last bin */
         if (endIndex >= examples.size()) {
             return examples.size() - 1;
         }
 
-        // if the current bin is not the last bin and the next example has the same value as the current example, extend the bin
+        /* if the current bin is not the last bin and the next example has the same value as the current example, extend the bin */
         while (endIndex < examples.size() - 1 && examples.get(endIndex)[attributeId].equals(examples.get(endIndex + 1)[attributeId])) {
             endIndex++;
         }
 
         return endIndex;
-    }
-
-    /**
-     * Sorts the given examples by the given attribute.
-     */
-    private List<Object[]> sortExamplesViaAttribute(List<Object[]> examples, int attributeId) {
-        return examples.stream()
-                .sorted(Comparator.comparing(o -> Double.parseDouble(o[attributeId].toString())))
-                .toList();
     }
 }

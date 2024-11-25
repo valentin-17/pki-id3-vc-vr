@@ -1,13 +1,29 @@
 package de.uni_trier.wi2.pki.tree;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Class for representing a node in the decision tree.
  */
 public class DecisionTreeNode {
 
+    /**
+     * Constructor for decision tree node.
+     *
+     * @param parent         Parent node of current node.
+     * @param elements       Elements for current node.
+     * @param attributeIndex Index for current attribute.
+     */
 
+    public DecisionTreeNode(DecisionTreeNode parent, Collection<Object[]> elements, int attributeIndex) {
+        this.parent = parent;
+        this.attributeIndex = attributeIndex;
+        this.elements = elements;
+        splits = new HashMap<>();
+    }
 
     private Collection<Object[]> elements;
 
@@ -27,28 +43,12 @@ public class DecisionTreeNode {
     HashMap<String, DecisionTreeNode> splits;
 
     /**
-     * Constructor for decision tree node.
-     *
-     * @param parent         Parent node of current node.
-     * @param elements       Elements for current node.
-     * @param attributeIndex Index for current attribute.
-     */
-
-    public DecisionTreeNode(DecisionTreeNode parent, Collection<Object[]> elements, int attributeIndex) {
-        this.parent = parent;
-        this.attributeIndex = attributeIndex;
-        this.elements = elements;
-        splits = new HashMap<>();
-    }
-
-    /**
      * Adds a split to the current node.
      *
      * @param Object     CSV attribute for which a split is made.
      * @param decisionTreeNode Child decision tree node.
      */
     public void addSplit(String Object, DecisionTreeNode decisionTreeNode) {
-        decisionTreeNode.parent = this;
         splits.put(Object, decisionTreeNode);
     }
 
@@ -59,22 +59,7 @@ public class DecisionTreeNode {
      * @return the leaf node.
      */
     protected DecisionTreeNode getClassificationNode(Object[] example) {
-        DecisionTreeNode currentNode = this;
-
-        while (currentNode != null) {
-
-            if (currentNode.isLeafNode()) {
-                return currentNode;
-            }
-            int attributeIndex = currentNode.getAttributeIndex();
-            if (attributeIndex < 0 || attributeIndex >= example.length) {
-                throw new IllegalArgumentException("Invalid attribute index: " + attributeIndex);
-            }
-
-            String attributeValue = (String) example[attributeIndex];
-            currentNode = currentNode.getSplits().get(attributeValue);
-
-        }
+        //tmp
         return null;
     }
 
