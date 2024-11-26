@@ -10,4 +10,9 @@ public abstract class Settings {
      * Resets the settings to their default values.
      */
     public abstract void resetToDefault();
+
+    /**
+     * Prints the default settings to the console.
+     */
+    public abstract void printDefaultSettings();
 }

@@ -39,9 +39,17 @@ public class CSVSettings extends Settings {
     }
 
     @Override
+    public void printDefaultSettings() {
+        System.out.println("Default CSV settings:");
+        System.out.println("- Filename: " + this.fileName);
+        System.out.println("- Label Attribute Index: " + this.labelAttributeIndex);
+        System.out.println("- Delimiter: " + this.delimiter);
+    }
+
+    @Override
     public void resetToDefault() {
         this.fileName = "churn_data.csv";
-        this.labelAttributeIndex = 0;
+        this.labelAttributeIndex = 9;
         this.delimiter = ";";
     }
 }
