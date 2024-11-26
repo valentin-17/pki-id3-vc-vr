@@ -1,7 +1,6 @@
 package de.uni_trier.wi2.pki.preprocess;
 
 import de.uni_trier.wi2.pki.Main;
-import de.uni_trier.wi2.pki.settings.ID3Settings;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -296,5 +295,6 @@ public class KMeansDiscretizer extends BinningDiscretizer {
         for (String binName : binNames) {
             System.out.println(binName);
         }
+        System.out.println();
     }
 }

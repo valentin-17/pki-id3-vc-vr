@@ -60,7 +60,7 @@ public class CrossValidator {
         }
 
         System.out.println("Cross-validation finished.");
-        System.out.printf("Classification accuracy of best model: %.2f%%", bestAccuracy * 100);
+        System.out.printf("Classification accuracy of best model: %.2f%%\n", bestAccuracy * 100);
         return bestModel;
     }
 }
